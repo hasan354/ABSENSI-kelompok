@@ -108,6 +108,26 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
         <input type="text" id="i-hp" placeholder="08xx xxxx xxxx">
       </div>
     </div>
+    <div class="row">
+      <div class="form-group">
+        <label>Tanggal Lahir</label>
+        <input type="date" id="i-tgl">
+      </div>
+      <div class="form-group">
+        <label>Jenis Kelamin</label>
+        <div style="display:flex;gap:8px;margin-top:2px">
+          <button id="jk-l" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJK('L')">👨 L</button>
+          <button id="jk-p" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJK('P')">👩 P</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Mubaliq Setempat (MS)</label>
+      <div style="display:flex;gap:8px">
+        <button id="ms-n" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihMS(false)">Bukan MS</button>
+        <button id="ms-y" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihMS(true)">⭐ MS</button>
+      </div>
+    </div>
     <button class="btn btn-primary" onclick="addJamaah()">+ Tambah Jamaah</button>
   </div>
   <div class="card">
@@ -135,6 +155,14 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
         <div class="form-group">
           <label>Waktu</label>
           <input type="time" id="s-waktu" value="19:30">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Jenis Pengajian</label>
+        <div style="display:flex;gap:6px">
+          <button id="jp-umum" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('umum')">🕌 Umum</button>
+          <button id="jp-keputrian" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('keputrian')">👩 Keputrian</button>
+          <button id="jp-ms" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('ms')">⭐ MS</button>
         </div>
       </div>
       <button class="btn btn-primary" onclick="buatSesi()">+ Buat Sesi</button>
@@ -228,6 +256,44 @@ let CFG = {
 let activeSesi = null;
 let absensiTemp = {};
 let keteranganTemp = {};
+let selectedJK = 'L';
+let selectedMS = false;
+let selectedJenis = 'umum';
+
+function pilihMS(val) {
+  selectedMS = val;
+  document.getElementById('ms-n').className = 'btn btn-sm ' + (!val ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('ms-y').className = 'btn btn-sm ' + (val ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('ms-n').style.cssText = 'flex:1;padding:9px';
+  document.getElementById('ms-y').style.cssText = 'flex:1;padding:9px';
+}
+
+function pilihJK(jk) {
+  selectedJK = jk;
+  document.getElementById('jk-l').className = 'btn btn-sm ' + (jk==='L' ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('jk-p').className = 'btn btn-sm ' + (jk==='P' ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('jk-l').style.cssText = 'flex:1;padding:9px';
+  document.getElementById('jk-p').style.cssText = 'flex:1;padding:9px';
+}
+
+function pilihJenis(j) {
+  selectedJenis = j;
+  ['umum','keputrian','ms'].forEach(k => {
+    const el = document.getElementById('jp-'+k);
+    el.className = 'btn btn-sm ' + (k===j ? 'btn-primary' : 'btn-ghost');
+    el.style.cssText = 'flex:1;padding:9px';
+  });
+}
+
+function hitungUsia(tgl) {
+  if (!tgl) return null;
+  const today = new Date();
+  const lahir = new Date(tgl);
+  let usia = today.getFullYear() - lahir.getFullYear();
+  const m = today.getMonth() - lahir.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < lahir.getDate())) usia--;
+  return usia;
+}
 
 function getHeaders() {
   return {
@@ -307,9 +373,13 @@ async function addJamaah() {
   const hp = document.getElementById('i-hp').value.trim();
   if (!nama) return toast('⚠️ Nama wajib diisi');
   try {
-    await sbPost('jamaah', { nama, hp });
+    const tgl_lahir = document.getElementById('i-tgl').value || null;
+    await sbPost('jamaah', { nama, hp, jenis_kelamin: selectedJK, tgl_lahir, is_ms: selectedMS });
     document.getElementById('i-nama').value = '';
     document.getElementById('i-hp').value = '';
+    document.getElementById('i-tgl').value = '';
+    selectedJK = 'L'; pilihJK('L');
+    selectedMS = false; pilihMS(false);
     toast('✅ Jamaah ditambahkan');
     renderJamaah();
   } catch(e) { toast('❌ Gagal: ' + e.message); }
@@ -328,16 +398,21 @@ async function renderJamaah(q='') {
       el.innerHTML = '<div class="empty"><div class="empty-icon">🕌</div>Belum ada jamaah</div>';
       return;
     }
-    el.innerHTML = data.map(j => `
+    el.innerHTML = data.map(j => {
+      const usia = hitungUsia(j.tgl_lahir);
+      const usiaStr = usia !== null ? ` · ${usia} thn` : '';
+      const msBadge = j.is_ms ? ' <span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">⭐MS</span>' : '';
+      return `
       <div class="list-item">
-        <div class="avatar">${j.nama[0].toUpperCase()}</div>
+        <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'👩':'👨'}</div>
         <div class="info">
-          <div class="nama">${j.nama}</div>
+          <div class="nama">${j.nama}${msBadge} <span style="font-size:11px;color:var(--abu)">${j.jenis_kelamin==='P'?'P':'L'}${usiaStr}</span></div>
           <div class="meta">${j.hp || '—'}</div>
         </div>
-      <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}')">Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}','${j.jenis_kelamin||'L'}','${j.tgl_lahir||''}',${!!j.is_ms})">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="hapusJamaah('${j.id}')">Hapus</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { el.innerHTML = '<div class="empty">❌ Gagal memuat: ' + e.message + '</div>'; }
 }
 
@@ -358,8 +433,9 @@ async function buatSesi() {
   const waktu = document.getElementById('s-waktu').value;
   if (!nama || !tanggal) return toast('⚠️ Nama & tanggal wajib diisi');
   try {
-    const [sesi] = await sbPost('sesi', { nama, tanggal, waktu, selesai: false });
+    const [sesi] = await sbPost('sesi', { nama, tanggal, waktu, selesai: false, jenis: selectedJenis });
     document.getElementById('s-nama').value = '';
+    selectedJenis = 'umum'; pilihJenis('umum');
     toast('✅ Sesi dibuat');
     await bukaAbsensi(sesi);
   } catch(e) { toast('❌ Gagal: ' + e.message); }
@@ -377,14 +453,13 @@ async function renderSesiList() {
     }
     el.innerHTML = data.map(s => {
       const tgl = new Date(s.tanggal).toLocaleDateString('id-ID', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
-      const badge = s.selesai
-        ? '<span class="sesi-badge badge-done">Selesai</span>'
-        : '<span class="sesi-badge badge-open">Aktif</span>';
+      const badge = s.selesai ? '<span class="sesi-badge badge-done">Selesai</span>' : '<span class="sesi-badge badge-open">Aktif</span>';
+      const jLabel = s.jenis==='keputrian' ? '👩 Keputrian' : s.jenis==='ms' ? '⭐ MS' : '🕌 Umum';
       return `
         <div class="sesi-card" onclick="bukaAbsensi(${JSON.stringify(s).replace(/"/g,'&quot;')})">
           <div class="avatar" style="background:${s.selesai?'var(--abu)':'var(--hijau)'}">📋</div>
           <div class="info">
-            <div class="nama">${s.nama}</div>
+            <div class="nama">${s.nama} <span style="font-size:11px;color:var(--abu)">${jLabel}</span></div>
             <div class="meta">📅 ${tgl} ⏰ ${s.waktu||'—'}</div>
           </div>
           ${badge}
@@ -405,8 +480,13 @@ async function bukaAbsensi(sesi) {
       sbGet('absensi?sesi_id=eq.' + sesi.id)
     ]);
 
+    // Filter jamaah sesuai jenis sesi
+    let filtered = jamaahList;
+    if (sesi.jenis === 'keputrian') filtered = jamaahList.filter(j => j.jenis_kelamin === 'P');
+    else if (sesi.jenis === 'ms') filtered = jamaahList.filter(j => j.is_ms);
+
     // Init temp dari data existing, default tanpa
-    jamaahList.forEach(j => {
+    filtered.forEach(j => {
       const existing = absensiList.find(a => a.jamaah_id === j.id);
       absensiTemp[j.id] = existing ? existing.status : 'tanpa';
       if (existing && existing.keterangan) keteranganTemp[j.id] = existing.keterangan;
@@ -423,7 +503,7 @@ async function bukaAbsensi(sesi) {
     document.getElementById('infaq2').value = sesi.infaq2 || '';
     updateStatInfaq();
 
-    renderAbsensi('', jamaahList);
+    renderAbsensi('', filtered);
   } catch(e) { toast('❌ Gagal buka sesi: ' + e.message); }
 }
 
@@ -440,7 +520,12 @@ function renderAbsensi(q='', jamaahList=null) {
   if (jamaahList) _jamaahCache = jamaahList;
   const el = document.getElementById('list-absensi');
   const data = _jamaahCache.filter(j => j.nama.toLowerCase().includes(q.toLowerCase()));
-  el.innerHTML = data.map(j => {
+
+  // Pisah L dan P (kecuali keputrian/ms yang sudah difilter)
+  const laki = data.filter(j => j.jenis_kelamin !== 'P');
+  const perempuan = data.filter(j => j.jenis_kelamin === 'P');
+
+  function buatBaris(j) {
     const st = absensiTemp[j.id] || 'tanpa';
     const ket = keteranganTemp[j.id] || '';
     const inputKet = st === 'ijin' ? `
@@ -451,9 +536,9 @@ function renderAbsensi(q='', jamaahList=null) {
       </div>` : '';
     return `
     <div class="abs-row ${st}" style="flex-wrap:wrap">
-      <div class="avatar">${j.nama[0].toUpperCase()}</div>
+      <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'👩':'👨'}</div>
       <div class="info" style="flex:1;min-width:120px">
-        <div class="nama">${j.nama}</div>
+        <div class="nama">${j.nama}${j.is_ms?' <span style="font-size:10px;background:#fef9c3;color:#854d0e;padding:1px 5px;border-radius:8px">⭐MS</span>':''}</div>
         ${inputKet}
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0">
@@ -462,7 +547,16 @@ function renderAbsensi(q='', jamaahList=null) {
         <button class="status-btn t ${st==='tanpa'?'on':''}" onclick="setStatus('${j.id}','tanpa')">TK</button>
       </div>
     </div>`;
-  }).join('');
+  }
+
+  let html = '';
+  if (activeSesi?.jenis === 'umum') {
+    if (laki.length) html += `<div style="font-size:12px;font-weight:700;color:var(--hijau);margin:8px 0 4px">👨 Laki-laki (${laki.length})</div>` + laki.map(buatBaris).join('');
+    if (perempuan.length) html += `<div style="font-size:12px;font-weight:700;color:#be185d;margin:12px 0 4px">👩 Perempuan (${perempuan.length})</div>` + perempuan.map(buatBaris).join('');
+  } else {
+    html = data.map(buatBaris).join('');
+  }
+  el.innerHTML = html || '<div class="empty"><div class="empty-icon">👥</div>Tidak ada jamaah</div>';
   updateStat();
 }
 
@@ -518,7 +612,7 @@ async function selesaiAbsensi() {
 }
 
 // modal edit
-function editJamaah(id, nama, hp) {
+function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false) {
   const modal = document.createElement('div');
   modal.id = 'modal-edit';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -527,6 +621,21 @@ function editJamaah(id, nama, hp) {
       <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:14px">✏️ Edit Jamaah</div>
       <div class="form-group"><label>Nama Lengkap</label><input id="edit-nama" type="text" value="${nama}"></div>
       <div class="form-group"><label>No. HP</label><input id="edit-hp" type="text" value="${hp}"></div>
+      <div class="form-group"><label>Tanggal Lahir</label><input id="edit-tgl" type="date" value="${tgl}"></div>
+      <div class="form-group">
+        <label>Jenis Kelamin</label>
+        <select id="edit-jk" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg)">
+          <option value="L" ${jk==='L'?'selected':''}>👨 Laki-laki</option>
+          <option value="P" ${jk==='P'?'selected':''}>👩 Perempuan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Mubaliq Setempat (MS)</label>
+        <select id="edit-ms" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg)">
+          <option value="false" ${!is_ms?'selected':''}>Bukan MS</option>
+          <option value="true" ${is_ms?'selected':''}>⭐ MS</option>
+        </select>
+      </div>
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-ghost" onclick="document.getElementById('modal-edit').remove()">Batal</button>
         <button class="btn btn-primary" onclick="simpanEditJamaah('${id}')">Simpan</button>
@@ -537,9 +646,12 @@ function editJamaah(id, nama, hp) {
 async function simpanEditJamaah(id) {
   const nama = document.getElementById('edit-nama').value.trim();
   const hp   = document.getElementById('edit-hp').value.trim();
+  const jk   = document.getElementById('edit-jk').value;
+  const tgl_lahir = document.getElementById('edit-tgl').value || null;
+  const is_ms = document.getElementById('edit-ms').value === 'true';
   if (!nama) return toast('⚠️ Nama wajib diisi');
   try {
-    await sbPatch('jamaah?id=eq.' + id, { nama, hp });
+    await sbPatch('jamaah?id=eq.' + id, { nama, hp, jenis_kelamin: jk, tgl_lahir, is_ms });
     document.getElementById('modal-edit').remove();
     toast('✅ Data diperbarui');
     renderJamaah();
@@ -553,20 +665,37 @@ function downloadPDF() {
   const ijin  = _jamaahCache.filter(j => absensiTemp[j.id] === 'ijin');
   const tanpa = _jamaahCache.filter(j => absensiTemp[j.id] === 'tanpa');
 
-  const rows = _jamaahCache.map((j, i) => {
+  function buatRowPDF(j, no) {
     const st = absensiTemp[j.id] || 'tanpa';
     const label = st === 'hadir' ? 'Hadir' : st === 'ijin' ? 'Ijin' : 'Tanpa Ket';
     const color = st === 'hadir' ? '#166534' : st === 'ijin' ? '#1e40af' : '#991b1b';
     const bg    = st === 'hadir' ? '#f0fdf4' : st === 'ijin' ? '#eff6ff' : '#fef2f2';
     const ket   = st === 'ijin' ? (keteranganTemp[j.id] || '—') : '';
     return `<tr style="background:${bg}">
-      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${i+1}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb">${j.nama}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${no}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb">${j.nama}${hitungUsia(j.tgl_lahir) !== null ? ' <span style="color:#888;font-size:11px">('+hitungUsia(j.tgl_lahir)+'th)</span>' : ''}</td>
       <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#555">${j.hp||'—'}</td>
       <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;color:${color}">${label}</td>
       <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#1e40af;font-size:12px">${ket}</td>
     </tr>`;
-  }).join('');
+  }
+
+  const laki = _jamaahCache.filter(j => j.jenis_kelamin !== 'P');
+  const perempuan = _jamaahCache.filter(j => j.jenis_kelamin === 'P');
+
+  let rows = '';
+  if (activeSesi.jenis === 'umum') {
+    if (laki.length) {
+      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#dcfce7;font-weight:700;color:#166534;font-size:12px">👨 Laki-laki (${laki.length})</td></tr>`;
+      rows += laki.map((j,i) => buatRowPDF(j, i+1)).join('');
+    }
+    if (perempuan.length) {
+      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#fce7f3;font-weight:700;color:#be185d;font-size:12px">👩 Perempuan (${perempuan.length})</td></tr>`;
+      rows += perempuan.map((j,i) => buatRowPDF(j, i+1)).join('');
+    }
+  } else {
+    rows = _jamaahCache.map((j,i) => buatRowPDF(j, i+1)).join('');
+  }
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <style>
