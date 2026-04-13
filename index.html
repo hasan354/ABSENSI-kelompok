@@ -97,7 +97,10 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 <!-- TAB JAMAAH -->
 <div id="tab-jamaah" class="panel active">
   <div class="card">
-    <div class="card-title">Tambah Jamaah Baru</div>
+    <div class="card-title" onclick="toggleForm()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+      Tambah Jamaah Baru <span id="form-toggle-icon">＋</span>
+    </div>
+    <div id="form-jamaah" class="hidden">
     <div class="row">
       <div class="form-group">
         <label>Nama Lengkap</label>
@@ -129,6 +132,7 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
       </div>
     </div>
     <button class="btn btn-primary" onclick="addJamaah()">+ Tambah Jamaah</button>
+    </div>
   </div>
   <div class="card">
     <div class="card-title">Daftar Jamaah <span id="jml-jamaah" style="float:right;color:var(--abu);font-weight:600">0</span></div>
@@ -259,6 +263,13 @@ let keteranganTemp = {};
 let selectedJK = 'L';
 let selectedMS = false;
 let selectedJenis = 'umum';
+
+function toggleForm() {
+  const f = document.getElementById('form-jamaah');
+  const icon = document.getElementById('form-toggle-icon');
+  const hidden = f.classList.toggle('hidden');
+  icon.textContent = hidden ? '＋' : '－';
+}
 
 function pilihMS(val) {
   selectedMS = val;
