@@ -96,28 +96,28 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 
 <!-- TAB JAMAAH -->
 <div id="tab-jamaah" class="panel active">
-  <div class="card" style="background:#1e40af;color:#fff">
+  <div class="card" style="background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff">
     <div class="card-title" onclick="toggleForm()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#fff">
       Tambah Jamaah Baru <span id="form-toggle-icon">＋</span>
     </div>
     <div id="form-jamaah" class="hidden">
     <div class="row">
       <div class="form-group">
-        <label>Nama Lengkap</label>
+        <label style="color:rgba(255,255,255,.8)">Nama Lengkap</label>
         <input type="text" id="i-nama" placeholder="Tulis Nama Jamaah">
       </div>
       <div class="form-group">
-        <label>No. HP</label>
+        <label style="color:rgba(255,255,255,.8)">No. HP</label>
         <input type="text" id="i-hp" placeholder="08xx xxxx xxxx">
       </div>
     </div>
     <div class="row">
       <div class="form-group">
-        <label>Tanggal Lahir</label>
+        <label style="color:rgba(255,255,255,.8)">Tanggal Lahir</label>
         <input type="date" id="i-tgl">
       </div>
       <div class="form-group">
-        <label>Jenis Kelamin</label>
+        <label style="color:rgba(255,255,255,.8)">Jenis Kelamin</label>
         <div style="display:flex;gap:8px;margin-top:2px">
           <button id="jk-l" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJK('L')">👳 L</button>
           <button id="jk-p" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJK('P')">🧕 P</button>
@@ -125,13 +125,13 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
       </div>
     </div>
     <div class="form-group">
-      <label>Mubaliq Setempat (MS)</label>
+      <label style="color:rgba(255,255,255,.8)">Mubaliq Setempat (MS)</label>
       <div style="display:flex;gap:8px">
         <button id="ms-n" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihMS(false)">Bukan MS</button>
         <button id="ms-y" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihMS(true)">⭐ MS</button>
       </div>
     </div>
-    <button class="btn btn-primary" onclick="addJamaah()">+ Tambah Jamaah</button>
+    <button class="btn btn-primary" onclick="addJamaah()" style="background:#fff;color:#1a6b45;margin-top:4px">+ Tambah Jamaah</button>
     </div>
   </div>
   <div class="card">
@@ -145,34 +145,34 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 <div id="tab-absensi" class="panel">
   <!-- Daftar Sesi -->
   <div id="view-sesi-list">
-  <div class="card" style="background:#1e40af;color:#fff">
+  <div class="card" style="background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff">
     <div class="card-title" onclick="toggleFormSesi()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#fff">
         Buat Sesi Baru <span id="sesi-toggle-icon">＋</span>
     </div>
       <div id="form-sesi" class="hidden">
       <div class="form-group">
-        <label>Nama Acara</label>
+        <label style="color:rgba(255,255,255,.8)">Nama Acara</label>
         <input type="text" id="s-nama" placeholder="Tulis Nama kegiatan / Pengajian">
       </div>
       <div class="row">
         <div class="form-group">
-          <label>Tanggal</label>
+          <label style="color:rgba(255,255,255,.8)">Tanggal</label>
           <input type="date" id="s-tgl">
         </div>
         <div class="form-group">
-          <label>Waktu</label>
+          <label style="color:rgba(255,255,255,.8)">Waktu</label>
           <input type="time" id="s-waktu" value="19:30">
         </div>
       </div>
       <div class="form-group">
-        <label>Jenis Pengajian</label>
+        <label style="color:rgba(255,255,255,.8)">Jenis Pengajian</label>
         <div style="display:flex;gap:6px">
           <button id="jp-umum" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('umum')">🕌 Umum</button>
           <button id="jp-keputrian" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('keputrian')">🧕 Keputrian</button>
           <button id="jp-ms" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('ms')">⭐ MS</button>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="buatSesi()">+ Buat Sesi</button>
+      <button class="btn btn-primary" onclick="buatSesi()" style="background:#fff;color:#1a6b45;margin-top:4px">+ Buat Sesi</button>
       </div>
     </div>
     <div class="card">
