@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absensi Pengajian</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --hijau: #1a6b45; --hijau-muda: #2d9461; --biru: #2563eb; --biru-muda: #3b82f6;
+  --merah: #dc2626; --merah-muda: #ef4444; --bg: #f8f7f4; --putih: #ffffff;
+  --teks: #2a1f0f; --abu: #7a6a55; --border: #e8e0d0;
+  --shadow: 0 2px 12px rgba(0,0,0,.06); --r: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--teks); }
+.header { background:var(--hijau); padding:20px 16px; color:#fff; }
+.header h1 { font-size:20px; font-weight:700; }
+.header p { font-size:12px; opacity:.8; margin-top:2px; }
+.tabs { display:flex; background:var(--putih); box-shadow:var(--shadow); position:sticky; top:0; z-index:10; }
+.tab { flex:1; padding:14px 8px; border:none; background:none; font-size:13px; font-weight:600; color:var(--abu); border-bottom:3px solid transparent; cursor:pointer; }
+.tab.active { color:var(--hijau); border-bottom-color:var(--hijau); }
+.wrap { max-width:600px; margin:16px auto; padding:0 16px; }
+.panel { display:none; }
+.panel.active { display:block; animation:fade .2s; }
+@keyframes fade { from{opacity:0} to{opacity:1} }
+.card { background:var(--putih); border-radius:var(--r); padding:16px; box-shadow:var(--shadow); margin-bottom:12px; }
+.card-title { font-size:14px; font-weight:700; margin-bottom:12px; color:var(--hijau); }
+.form-group { margin-bottom:12px; }
+label { display:block; font-size:12px; font-weight:600; color:var(--abu); margin-bottom:4px; }
+input, select { width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; background:var(--bg); outline:none; }
+input:focus, select:focus { border-color:var(--hijau); background:var(--putih); }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.btn { padding:11px 16px; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; width:100%; }
+.btn-primary { background:var(--hijau); color:#fff; }
+.btn-primary:hover { background:var(--hijau-muda); }
+.btn-ghost { background:var(--bg); color:var(--teks); border:1.5px solid var(--border); }
+.btn-danger { background:#fff0f0; color:var(--merah); border:1.5px solid #ffd0d0; }
+.btn-sm { padding:6px 10px; font-size:12px; width:auto; }
+.list-item { display:flex; align-items:center; padding:10px 12px; background:var(--bg); border-radius:8px; margin-bottom:6px; gap:10px; }
+.avatar { width:36px; height:36px; border-radius:50%; background:var(--hijau); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+.info { flex:1; min-width:0; }
+.nama { font-weight:600; font-size:14px; }
+.meta { font-size:11px; color:var(--abu); margin-top:2px; }
+.sesi-info { background:var(--hijau); color:#fff; border-radius:var(--r); padding:14px; margin-bottom:12px; }
+.sesi-info h3 { font-size:16px; margin-bottom:4px; }
+.sesi-info p { font-size:12px; opacity:.8; }
+.sesi-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0; }
+.stat { background:var(--putih); text-align:center; padding:10px; border-radius:8px; }
+.stat-n { font-size:22px; font-weight:700; }
+.stat-l { font-size:11px; color:var(--abu); }
+.abs-row { display:flex; align-items:center; padding:10px 12px; background:var(--bg); border-radius:8px; margin-bottom:6px; gap:10px; border-left:4px solid var(--border); }
+.abs-row.hadir { border-left-color:var(--hijau-muda); background:#f0fdf4; }
+.abs-row.ijin { border-left-color:var(--biru-muda); background:#eff6ff; }
+.abs-row.tanpa { border-left-color:var(--merah-muda); background:#fef2f2; }
+.status-btn { padding:5px 10px; border-radius:20px; border:1.5px solid; font-size:11px; font-weight:700; cursor:pointer; background:transparent; }
+.status-btn.h { border-color:var(--hijau-muda); color:var(--hijau-muda); }
+.status-btn.h.on { background:var(--hijau-muda); color:#fff; }
+.status-btn.i { border-color:var(--biru-muda); color:var(--biru-muda); }
+.status-btn.i.on { background:var(--biru-muda); color:#fff; }
+.status-btn.t { border-color:var(--merah-muda); color:var(--merah-muda); }
+.status-btn.t.on { background:var(--merah-muda); color:#fff; }
+.search { position:relative; margin-bottom:12px; }
+.search input { padding-left:36px; }
+.search::before { content:'🔍'; position:absolute; left:12px; top:50%; transform:translateY(-50%); }
+.empty { text-align:center; padding:32px 16px; color:var(--abu); }
+.empty-icon { font-size:36px; margin-bottom:8px; }
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--hijau); color:#fff; padding:10px 18px; border-radius:30px; font-size:13px; font-weight:600; transition:.3s; z-index:100; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.hidden { display:none; }
+.loader { text-align:center; padding:20px; color:var(--abu); font-size:13px; }
+.sesi-card { display:flex; align-items:center; padding:12px; background:var(--bg); border-radius:8px; margin-bottom:8px; gap:10px; cursor:pointer; border:1.5px solid transparent; transition:.2s; }
+.sesi-card:hover { border-color:var(--hijau); background:#f0fdf4; }
+.sesi-card.active-sesi { border-color:var(--hijau); background:#f0fdf4; }
+.sesi-badge { padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; }
+.badge-open { background:#dcfce7; color:var(--hijau); }
+.badge-done { background:#f1f5f9; color:var(--abu); }
+.config-box { background:#fffbeb; border:1.5px solid #fde68a; border-radius:8px; padding:12px; margin-bottom:12px; font-size:12px; color:#92400e; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🕌 Absensi Pengajian</h1>
+  <p id="header-sub">Sistem manajemen jamaah digital</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('jamaah',this)">Data Jamaah</button>
+  <button class="tab" onclick="switchTab('absensi',this)">Absensi</button>
+  <button class="tab" onclick="switchTab('setting',this)">Pengaturan</button>
+</div>
+
+<div class="wrap">
+
+<!-- TAB JAMAAH -->
+<div id="tab-jamaah" class="panel active">
+  <div class="card">
+    <div class="card-title">Tambah Jamaah Baru</div>
+    <div class="row">
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="i-nama" placeholder="Tulis Nama Jamaah">
+      </div>
+      <div class="form-group">
+        <label>No. HP</label>
+        <input type="text" id="i-hp" placeholder="08xx xxxx xxxx">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="addJamaah()">+ Tambah Jamaah</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Daftar Jamaah <span id="jml-jamaah" style="float:right;color:var(--abu);font-weight:600">0</span></div>
+    <div class="search"><input type="text" placeholder="Cari nama..." oninput="renderJamaah(this.value)"></div>
+    <div id="list-jamaah"><div class="loader">Memuat data...</div></div>
+  </div>
+</div>
+
+<!-- TAB ABSENSI -->
+<div id="tab-absensi" class="panel">
+  <!-- Daftar Sesi -->
+  <div id="view-sesi-list">
+    <div class="card">
+      <div class="card-title">Buat Sesi Baru</div>
+      <div class="form-group">
+        <label>Nama Acara</label>
+        <input type="text" id="s-nama" placeholder="Tulis Nama kegiatan / Pengajian">
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>Tanggal</label>
+          <input type="date" id="s-tgl">
+        </div>
+        <div class="form-group">
+          <label>Waktu</label>
+          <input type="time" id="s-waktu" value="19:30">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="buatSesi()">+ Buat Sesi</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Daftar Sesi</div>
+      <div id="list-sesi"><div class="loader">Memuat sesi...</div></div>
+    </div>
+  </div>
+
+  <!-- Halaman Absensi Aktif -->
+  <div id="view-absensi" class="hidden">
+    <div class="sesi-info">
+      <h3 id="sa-nama">Nama Sesi</h3>
+      <p id="sa-detail">Detail sesi</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <div>
+          <div style="font-size:11px;opacity:.8;margin-bottom:4px">💰 Infaq 1</div>
+          <input type="number" id="infaq1" placeholder="0" min="0"
+            style="width:100%;padding:7px 10px;border-radius:7px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;font-size:14px;font-weight:700;outline:none"
+            oninput="simpanInfaq()">
+        </div>
+        <div>
+          <div style="font-size:11px;opacity:.8;margin-bottom:4px">💰 Infaq 2</div>
+          <input type="number" id="infaq2" placeholder="0" min="0"
+            style="width:100%;padding:7px 10px;border-radius:7px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;font-size:14px;font-weight:700;outline:none"
+            oninput="simpanInfaq()">
+        </div>
+      </div>
+      <div class="sesi-actions">
+        <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="kembaliKeSesi()">← Sesi Lain</button>
+        <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="selesaiAbsensi()">✅ Selesai</button>
+        <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="downloadPDF()">⬇️ PDF</button>
+      </div>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(5,1fr)">
+      <div class="stat"><div class="stat-n" id="st-hadir" style="color:var(--hijau-muda)">0</div><div class="stat-l">Hadir</div></div>
+      <div class="stat"><div class="stat-n" id="st-ijin" style="color:var(--biru-muda)">0</div><div class="stat-l">Ijin</div></div>
+      <div class="stat"><div class="stat-n" id="st-tanpa" style="color:var(--merah-muda)">0</div><div class="stat-l">Tanpa Ket</div></div>
+      <div class="stat"><div class="stat-n" id="st-infaq1" style="color:var(--hijau);font-size:13px">Rp 0</div><div class="stat-l">Infaq 1</div></div>
+      <div class="stat"><div class="stat-n" id="st-infaq2" style="color:var(--hijau);font-size:13px">Rp 0</div><div class="stat-l">Infaq 2</div></div>
+    </div>
+    <div class="card">
+      <div class="search"><input type="text" placeholder="Cari jamaah..." oninput="renderAbsensi(this.value)"></div>
+      <div id="list-absensi"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB SETTING -->
+<div id="tab-setting" class="panel">
+  <div class="card">
+    <div class="card-title">Konfigurasi Supabase</div>
+    <div class="config-box">⚠️ Isi URL dan Anon Key dari project Supabase kamu. Wajib diisi sebelum menggunakan aplikasi.</div>
+    <div class="form-group">
+      <label>Supabase URL</label>
+      <input type="text" id="set-url" placeholder="https://xxxx.supabase.co" oninput="saveSet()">
+    </div>
+    <div class="form-group">
+      <label>Supabase Anon Key</label>
+      <input type="text" id="set-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="saveSet()">
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Nama Kelompok</div>
+    <div class="form-group">
+      <label>Nama Kelompok</label>
+      <input type="text" id="set-nama" placeholder="Kelompok Laosan" oninput="saveSet()">
+    </div>
+  </div>
+  <div style="text-align:center;padding:20px 0;font-size:12px;color:var(--abu)">Absensi Pengajian v4.0 — Supabase Edition</div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const DEFAULT_CFG = {
+  url: 'https://llmunnusdtebvrajsboa.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsbXVubnVzZHRlYnZyYWpzYm9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDU3OTIsImV4cCI6MjA5MTYyMTc5Mn0.0qX0w2PyJxJlLKgcdGE9DazAmqlXWwKjWf4k37Sgtvk',
+  nama: ''
+};
+const saved = JSON.parse(localStorage.getItem('absensiCfg') || '{}');
+// Pakai default jika url/key tidak ada di localStorage
+let CFG = {
+  url: saved.url || DEFAULT_CFG.url,
+  key: saved.key || DEFAULT_CFG.key,
+  nama: saved.nama || DEFAULT_CFG.nama
+};
+let activeSesi = null;
+let absensiTemp = {};
+let keteranganTemp = {};
+
+function getHeaders() {
+  return {
+    'apikey': CFG.key,
+    'Authorization': 'Bearer ' + CFG.key,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  };
+}
+function sbUrl(path) { return CFG.url + '/rest/v1/' + path; }
+
+async function sbGet(path) {
+  const r = await fetch(sbUrl(path), { headers: getHeaders() });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPost(path, body) {
+  const r = await fetch(sbUrl(path), { method:'POST', headers: getHeaders(), body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPatch(path, body) {
+  const r = await fetch(sbUrl(path), { method:'PATCH', headers: getHeaders(), body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(path) {
+  const r = await fetch(sbUrl(path), { method:'DELETE', headers: getHeaders() });
+  if (!r.ok) throw new Error(await r.text());
+}
+async function sbUpsert(path, body, onConflict) {
+  const url = sbUrl(path) + (onConflict ? '?on_conflict=' + onConflict : '');
+  const r = await fetch(url, {
+    method:'POST',
+    headers: { ...getHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── UTILS ────────────────────────────────────────────────
+function toast(msg, dur=2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'absensi') renderSesiList();
+  if (name === 'jamaah') renderJamaah();
+}
+function saveSet() {
+  CFG = {
+    url: document.getElementById('set-url').value.trim().replace(/\/$/, ''),
+    key: document.getElementById('set-key').value.trim(),
+    nama: document.getElementById('set-nama').value.trim()
+  };
+  localStorage.setItem('absensiCfg', JSON.stringify(CFG));
+  if (CFG.nama) document.getElementById('header-sub').textContent = CFG.nama;
+}
+function checkCfg() {
+  if (!CFG.url || !CFG.key) {
+    toast('⚠️ Isi Supabase URL & Key di Pengaturan dulu', 3000);
+    return false;
+  }
+  return true;
+}
+
+// ── JAMAAH ───────────────────────────────────────────────
+async function addJamaah() {
+  if (!checkCfg()) return;
+  const nama = document.getElementById('i-nama').value.trim();
+  const hp = document.getElementById('i-hp').value.trim();
+  if (!nama) return toast('⚠️ Nama wajib diisi');
+  try {
+    await sbPost('jamaah', { nama, hp });
+    document.getElementById('i-nama').value = '';
+    document.getElementById('i-hp').value = '';
+    toast('✅ Jamaah ditambahkan');
+    renderJamaah();
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
+}
+
+async function renderJamaah(q='') {
+  if (!checkCfg()) return;
+  const el = document.getElementById('list-jamaah');
+  el.innerHTML = '<div class="loader">Memuat...</div>';
+  try {
+    let url = 'jamaah?order=nama.asc';
+    if (q) url += '&nama=ilike.*' + encodeURIComponent(q) + '*';
+    const data = await sbGet(url);
+    document.getElementById('jml-jamaah').textContent = data.length + ' orang';
+    if (!data.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">🕌</div>Belum ada jamaah</div>';
+      return;
+    }
+    el.innerHTML = data.map(j => `
+      <div class="list-item">
+        <div class="avatar">${j.nama[0].toUpperCase()}</div>
+        <div class="info">
+          <div class="nama">${j.nama}</div>
+          <div class="meta">${j.hp || '—'}</div>
+        </div>
+      <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="hapusJamaah('${j.id}')">Hapus</button>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">❌ Gagal memuat: ' + e.message + '</div>'; }
+}
+
+async function hapusJamaah(id) {
+  if (!confirm('Hapus jamaah ini?')) return;
+  try {
+    await sbDelete('jamaah?id=eq.' + id);
+    toast('🗑️ Jamaah dihapus');
+    renderJamaah();
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
+}
+
+// ── SESI ─────────────────────────────────────────────────
+async function buatSesi() {
+  if (!checkCfg()) return;
+  const nama = document.getElementById('s-nama').value.trim();
+  const tanggal = document.getElementById('s-tgl').value;
+  const waktu = document.getElementById('s-waktu').value;
+  if (!nama || !tanggal) return toast('⚠️ Nama & tanggal wajib diisi');
+  try {
+    const [sesi] = await sbPost('sesi', { nama, tanggal, waktu, selesai: false });
+    document.getElementById('s-nama').value = '';
+    toast('✅ Sesi dibuat');
+    await bukaAbsensi(sesi);
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
+}
+
+async function renderSesiList() {
+  if (!checkCfg()) return;
+  const el = document.getElementById('list-sesi');
+  el.innerHTML = '<div class="loader">Memuat...</div>';
+  try {
+    const data = await sbGet('sesi?order=created_at.desc');
+    if (!data.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Belum ada sesi</div>';
+      return;
+    }
+    el.innerHTML = data.map(s => {
+      const tgl = new Date(s.tanggal).toLocaleDateString('id-ID', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
+      const badge = s.selesai
+        ? '<span class="sesi-badge badge-done">Selesai</span>'
+        : '<span class="sesi-badge badge-open">Aktif</span>';
+      return `
+        <div class="sesi-card" onclick="bukaAbsensi(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+          <div class="avatar" style="background:${s.selesai?'var(--abu)':'var(--hijau)'}">📋</div>
+          <div class="info">
+            <div class="nama">${s.nama}</div>
+            <div class="meta">📅 ${tgl} ⏰ ${s.waktu||'—'}</div>
+          </div>
+          ${badge}
+        </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">❌ ' + e.message + '</div>'; }
+}
+
+async function bukaAbsensi(sesi) {
+  if (!checkCfg()) return;
+  activeSesi = sesi;
+  absensiTemp = {};
+
+  // Load jamaah & existing absensi
+  try {
+    const [jamaahList, absensiList] = await Promise.all([
+      sbGet('jamaah?order=nama.asc'),
+      sbGet('absensi?sesi_id=eq.' + sesi.id)
+    ]);
+
+    // Init temp dari data existing, default tanpa
+    jamaahList.forEach(j => {
+      const existing = absensiList.find(a => a.jamaah_id === j.id);
+      absensiTemp[j.id] = existing ? existing.status : 'tanpa';
+      if (existing && existing.keterangan) keteranganTemp[j.id] = existing.keterangan;
+    });
+
+    // Tampilkan view absensi
+    document.getElementById('view-sesi-list').classList.add('hidden');
+    document.getElementById('view-absensi').classList.remove('hidden');
+
+    const tgl = new Date(sesi.tanggal).toLocaleDateString('id-ID', {weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('sa-nama').textContent = sesi.nama;
+    document.getElementById('sa-detail').textContent = `📅 ${tgl} ⏰ ${sesi.waktu||'—'}`;
+    document.getElementById('infaq1').value = sesi.infaq1 || '';
+    document.getElementById('infaq2').value = sesi.infaq2 || '';
+    updateStatInfaq();
+
+    renderAbsensi('', jamaahList);
+  } catch(e) { toast('❌ Gagal buka sesi: ' + e.message); }
+}
+
+function kembaliKeSesi() {
+  activeSesi = null;
+  absensiTemp = {};
+  document.getElementById('view-sesi-list').classList.remove('hidden');
+  document.getElementById('view-absensi').classList.add('hidden');
+  renderSesiList();
+}
+
+let _jamaahCache = [];
+function renderAbsensi(q='', jamaahList=null) {
+  if (jamaahList) _jamaahCache = jamaahList;
+  const el = document.getElementById('list-absensi');
+  const data = _jamaahCache.filter(j => j.nama.toLowerCase().includes(q.toLowerCase()));
+  el.innerHTML = data.map(j => {
+    const st = absensiTemp[j.id] || 'tanpa';
+    const ket = keteranganTemp[j.id] || '';
+    const inputKet = st === 'ijin' ? `
+      <div style="margin-top:6px">
+        <input type="text" placeholder="Keterangan ijin..." value="${ket}"
+          style="font-size:12px;padding:6px 10px;border:1.5px solid #bfdbfe;border-radius:6px;background:#eff6ff;width:100%"
+          oninput="keteranganTemp['${j.id}']=this.value">
+      </div>` : '';
+    return `
+    <div class="abs-row ${st}" style="flex-wrap:wrap">
+      <div class="avatar">${j.nama[0].toUpperCase()}</div>
+      <div class="info" style="flex:1;min-width:120px">
+        <div class="nama">${j.nama}</div>
+        ${inputKet}
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="status-btn h ${st==='hadir'?'on':''}" onclick="setStatus('${j.id}','hadir')">Hadir</button>
+        <button class="status-btn i ${st==='ijin'?'on':''}" onclick="setStatus('${j.id}','ijin')">Ijin</button>
+        <button class="status-btn t ${st==='tanpa'?'on':''}" onclick="setStatus('${j.id}','tanpa')">TK</button>
+      </div>
+    </div>`;
+  }).join('');
+  updateStat();
+}
+
+function setStatus(id, st) {
+  absensiTemp[id] = st;
+  if (st !== 'ijin') {
+    // hapus keterangan kalau bukan ijin
+    delete keteranganTemp[id];
+  }
+  renderAbsensi();
+}
+
+function updateStat() {
+  const v = Object.values(absensiTemp);
+  document.getElementById('st-hadir').textContent = v.filter(x=>x==='hadir').length;
+  document.getElementById('st-ijin').textContent = v.filter(x=>x==='ijin').length;
+  document.getElementById('st-tanpa').textContent = v.filter(x=>x==='tanpa').length;
+}
+
+async function simpanInfaq() {
+  if (!activeSesi) return;
+  const infaq1 = parseInt(document.getElementById('infaq1').value) || 0;
+  const infaq2 = parseInt(document.getElementById('infaq2').value) || 0;
+  activeSesi.infaq1 = infaq1;
+  activeSesi.infaq2 = infaq2;
+  updateStatInfaq();
+  try {
+    await sbPatch('sesi?id=eq.' + activeSesi.id, { infaq1, infaq2 });
+  } catch(e) { /* silent save */ }
+}
+
+function updateStatInfaq() {
+  const i1 = activeSesi?.infaq1 || 0;
+  const i2 = activeSesi?.infaq2 || 0;
+  document.getElementById('st-infaq1').textContent = 'Rp ' + i1.toLocaleString('id-ID');
+  document.getElementById('st-infaq2').textContent = 'Rp ' + i2.toLocaleString('id-ID');
+}
+
+async function selesaiAbsensi() {
+  if (!activeSesi) return;
+  try {
+    // Upsert semua absensi sekaligus
+    const rows = Object.entries(absensiTemp).map(([jamaah_id, status]) => ({
+      sesi_id: activeSesi.id, jamaah_id, status,
+      keterangan: keteranganTemp[jamaah_id] || ''
+    }));
+    if (rows.length) await sbUpsert('absensi', rows, 'sesi_id,jamaah_id');
+    // Tandai sesi selesai
+    await sbPatch('sesi?id=eq.' + activeSesi.id, { selesai: true });
+    toast('✅ Absensi tersimpan ke Supabase');
+    kembaliKeSesi();
+  } catch(e) { toast('❌ Gagal simpan: ' + e.message); }
+}
+
+// modal edit
+function editJamaah(id, nama, hp) {
+  const modal = document.createElement('div');
+  modal.id = 'modal-edit';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+      <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:14px">✏️ Edit Jamaah</div>
+      <div class="form-group"><label>Nama Lengkap</label><input id="edit-nama" type="text" value="${nama}"></div>
+      <div class="form-group"><label>No. HP</label><input id="edit-hp" type="text" value="${hp}"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-ghost" onclick="document.getElementById('modal-edit').remove()">Batal</button>
+        <button class="btn btn-primary" onclick="simpanEditJamaah('${id}')">Simpan</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+async function simpanEditJamaah(id) {
+  const nama = document.getElementById('edit-nama').value.trim();
+  const hp   = document.getElementById('edit-hp').value.trim();
+  if (!nama) return toast('⚠️ Nama wajib diisi');
+  try {
+    await sbPatch('jamaah?id=eq.' + id, { nama, hp });
+    document.getElementById('modal-edit').remove();
+    toast('✅ Data diperbarui');
+    renderJamaah();
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
+}
+function downloadPDF() {
+  if (!activeSesi || !_jamaahCache.length) return toast('⚠️ Tidak ada data absensi');
+  const tgl = new Date(activeSesi.tanggal).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const majelis = CFG.nama || 'Majelis Ta\'lim';
+  const hadir = _jamaahCache.filter(j => absensiTemp[j.id] === 'hadir');
+  const ijin  = _jamaahCache.filter(j => absensiTemp[j.id] === 'ijin');
+  const tanpa = _jamaahCache.filter(j => absensiTemp[j.id] === 'tanpa');
+
+  const rows = _jamaahCache.map((j, i) => {
+    const st = absensiTemp[j.id] || 'tanpa';
+    const label = st === 'hadir' ? 'Hadir' : st === 'ijin' ? 'Ijin' : 'Tanpa Ket';
+    const color = st === 'hadir' ? '#166534' : st === 'ijin' ? '#1e40af' : '#991b1b';
+    const bg    = st === 'hadir' ? '#f0fdf4' : st === 'ijin' ? '#eff6ff' : '#fef2f2';
+    const ket   = st === 'ijin' ? (keteranganTemp[j.id] || '—') : '';
+    return `<tr style="background:${bg}">
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${i+1}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb">${j.nama}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#555">${j.hp||'—'}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;color:${color}">${label}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#1e40af;font-size:12px">${ket}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    body{font-family:'Segoe UI',sans-serif;padding:32px;color:#1a1a1a;font-size:13px}
+    h2{margin:0;font-size:18px;color:#1a6b45} h3{margin:4px 0 0;font-size:13px;font-weight:400;color:#555}
+    .meta{margin:16px 0;display:flex;gap:24px;font-size:12px;color:#555}
+    .stat{background:#f8f8f8;border-radius:8px;padding:8px 16px;text-align:center}
+    .stat b{display:block;font-size:20px}
+    .tbl-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden;margin-top:16px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#1a6b45 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:10px 12px;text-align:left;font-size:12px;border-right:1px solid rgba(255,255,255,.25)}
+    th:first-child{text-align:center;width:44px}
+    th:last-child{text-align:center;width:90px;border-right:none}
+    td{padding:8px 12px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;font-size:13px}
+    td:first-child{text-align:center;color:#888;font-size:12px}
+    td:last-child{text-align:center;font-weight:700;border-right:none}
+    tr:last-child td{border-bottom:none}
+    @media print{body{padding:16px}}
+  </style></head><body>
+  <h2>🕌 ${majelis}</h2>
+  <h3>Laporan Absensi — ${activeSesi.nama}</h3>
+  <div class="meta">
+    <span>📅 ${tgl}</span>
+    <span>⏰ ${activeSesi.waktu||'—'}</span>
+    <span>👥 ${_jamaahCache.length} jamaah</span>
+  </div>
+  <div style="display:flex;gap:12px;margin-bottom:16px">
+    <div class="stat"><b style="color:#166534">${hadir.length}</b>Hadir</div>
+    <div class="stat"><b style="color:#1e40af">${ijin.length}</b>Ijin</div>
+    <div class="stat"><b style="color:#991b1b">${tanpa.length}</b>Tanpa Ket</div>
+    <div class="stat"><b style="color:#166534">Rp ${(activeSesi.infaq1||0).toLocaleString('id-ID')}</b>Infaq 1</div>
+    <div class="stat"><b style="color:#166534">Rp ${(activeSesi.infaq2||0).toLocaleString('id-ID')}</b>Infaq 2</div>
+  </div>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>No</th><th>Nama</th><th>No. HP</th><th>Status</th><th>Keterangan Ijin</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  </div>
+  <p style="margin-top:24px;font-size:11px;color:#aaa;text-align:right">Dicetak: ${new Date().toLocaleString('id-ID')}</p>
+  ${(activeSesi.infaq1||activeSesi.infaq2) ? `
+  <div style="margin-top:16px;padding:12px 16px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;font-size:13px">
+    <b style="color:#166534">💰 Rekapitulasi Infaq</b>
+    <div style="display:flex;gap:32px;margin-top:8px">
+      <div>Infaq 1 &nbsp;<b style="color:#166534">Rp ${(activeSesi.infaq1||0).toLocaleString('id-ID')}</b></div>
+      <div>Infaq 2 &nbsp;<b style="color:#166534">Rp ${(activeSesi.infaq2||0).toLocaleString('id-ID')}</b></div>
+      <div>Total &nbsp;<b style="color:#166534">Rp ${((activeSesi.infaq1||0)+(activeSesi.infaq2||0)).toLocaleString('id-ID')}</b></div>
+    </div>
+  </div>` : ''}
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ── INIT ─────────────────────────────────────────────────
+function load() {
+  document.getElementById('set-url').value = CFG.url || '';
+  document.getElementById('set-key').value = CFG.key || '';
+  document.getElementById('set-nama').value = CFG.nama || '';
+  document.getElementById('s-tgl').value = new Date().toISOString().split('T')[0];
+  if (CFG.nama) document.getElementById('header-sub').textContent = CFG.nama;
+  // Pastikan CFG tersimpan ke localStorage jika belum ada (pakai default bawaan)
+  if (!localStorage.getItem('absensiCfg')) {
+    localStorage.setItem('absensiCfg', JSON.stringify(CFG));
+  }
+  if (CFG.url && CFG.key) renderJamaah();
+}
+load();
+</script>
+</body>
+</html>
