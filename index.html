@@ -463,9 +463,20 @@ async function renderSesiList() {
             <div class="meta">📅 ${tgl} ⏰ ${s.waktu||'—'}</div>
           </div>
           ${badge}
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();hapusSesi('${s.id}')">Hapus</button>
         </div>`;
     }).join('');
   } catch(e) { el.innerHTML = '<div class="empty">❌ ' + e.message + '</div>'; }
+}
+
+async function hapusSesi(id) {
+  if (!confirm('Hapus sesi ini beserta data absensinya?')) return;
+  try {
+    await sbDelete('absensi?sesi_id=eq.' + id);
+    await sbDelete('sesi?id=eq.' + id);
+    toast('🗑️ Sesi dihapus');
+    renderSesiList();
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
 }
 
 async function bukaAbsensi(sesi) {
