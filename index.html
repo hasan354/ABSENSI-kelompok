@@ -116,8 +116,8 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
       <div class="form-group">
         <label>Jenis Kelamin</label>
         <div style="display:flex;gap:8px;margin-top:2px">
-          <button id="jk-l" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJK('L')">👨 L</button>
-          <button id="jk-p" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJK('P')">👩 P</button>
+          <button id="jk-l" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJK('L')">👳 L</button>
+          <button id="jk-p" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJK('P')">🧕 P</button>
         </div>
       </div>
     </div>
@@ -161,7 +161,7 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
         <label>Jenis Pengajian</label>
         <div style="display:flex;gap:6px">
           <button id="jp-umum" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('umum')">🕌 Umum</button>
-          <button id="jp-keputrian" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('keputrian')">👩 Keputrian</button>
+          <button id="jp-keputrian" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('keputrian')">🧕 Keputrian</button>
           <button id="jp-ms" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('ms')">⭐ MS</button>
         </div>
       </div>
@@ -404,7 +404,7 @@ async function renderJamaah(q='') {
       const msBadge = j.is_ms ? ' <span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">⭐MS</span>' : '';
       return `
       <div class="list-item">
-        <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'👩':'👨'}</div>
+        <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
         <div class="info">
           <div class="nama">${j.nama}${msBadge} <span style="font-size:11px;color:var(--abu)">${j.jenis_kelamin==='P'?'P':'L'}${usiaStr}</span></div>
           <div class="meta">${j.hp || '—'}</div>
@@ -454,7 +454,7 @@ async function renderSesiList() {
     el.innerHTML = data.map(s => {
       const tgl = new Date(s.tanggal).toLocaleDateString('id-ID', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
       const badge = s.selesai ? '<span class="sesi-badge badge-done">Selesai</span>' : '<span class="sesi-badge badge-open">Aktif</span>';
-      const jLabel = s.jenis==='keputrian' ? '👩 Keputrian' : s.jenis==='ms' ? '⭐ MS' : '🕌 Umum';
+      const jLabel = s.jenis==='keputrian' ? '🧕 Keputrian' : s.jenis==='ms' ? '⭐ MS' : '🕌 Umum';
       return `
         <div class="sesi-card" onclick="bukaAbsensi(${JSON.stringify(s).replace(/"/g,'&quot;')})">
           <div class="avatar" style="background:${s.selesai?'var(--abu)':'var(--hijau)'}">📋</div>
@@ -547,7 +547,7 @@ function renderAbsensi(q='', jamaahList=null) {
       </div>` : '';
     return `
     <div class="abs-row ${st}" style="flex-wrap:wrap">
-      <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'👩':'👨'}</div>
+      <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
       <div class="info" style="flex:1;min-width:120px">
         <div class="nama">${j.nama}${j.is_ms?' <span style="font-size:10px;background:#fef9c3;color:#854d0e;padding:1px 5px;border-radius:8px">⭐MS</span>':''}</div>
         ${inputKet}
@@ -562,8 +562,8 @@ function renderAbsensi(q='', jamaahList=null) {
 
   let html = '';
   if (activeSesi?.jenis === 'umum') {
-    if (laki.length) html += `<div style="font-size:12px;font-weight:700;color:var(--hijau);margin:8px 0 4px">👨 Laki-laki (${laki.length})</div>` + laki.map(buatBaris).join('');
-    if (perempuan.length) html += `<div style="font-size:12px;font-weight:700;color:#be185d;margin:12px 0 4px">👩 Perempuan (${perempuan.length})</div>` + perempuan.map(buatBaris).join('');
+    if (laki.length) html += `<div style="font-size:12px;font-weight:700;color:var(--hijau);margin:8px 0 4px">👳 Laki-laki (${laki.length})</div>` + laki.map(buatBaris).join('');
+    if (perempuan.length) html += `<div style="font-size:12px;font-weight:700;color:#be185d;margin:12px 0 4px">🧕 Perempuan (${perempuan.length})</div>` + perempuan.map(buatBaris).join('');
   } else {
     html = data.map(buatBaris).join('');
   }
@@ -636,8 +636,8 @@ function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false) {
       <div class="form-group">
         <label>Jenis Kelamin</label>
         <select id="edit-jk" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg)">
-          <option value="L" ${jk==='L'?'selected':''}>👨 Laki-laki</option>
-          <option value="P" ${jk==='P'?'selected':''}>👩 Perempuan</option>
+          <option value="L" ${jk==='L'?'selected':''}>👳 Laki-laki</option>
+          <option value="P" ${jk==='P'?'selected':''}>🧕 Perempuan</option>
         </select>
       </div>
       <div class="form-group">
@@ -691,21 +691,27 @@ function downloadPDF() {
     </tr>`;
   }
 
-  const laki = _jamaahCache.filter(j => j.jenis_kelamin !== 'P');
-  const perempuan = _jamaahCache.filter(j => j.jenis_kelamin === 'P');
+  const sortByAge = arr => [...arr].sort((a, b) => {
+    if (!a.tgl_lahir) return 1;
+    if (!b.tgl_lahir) return -1;
+    return new Date(a.tgl_lahir) - new Date(b.tgl_lahir);
+  });
+
+  const laki = sortByAge(_jamaahCache.filter(j => j.jenis_kelamin !== 'P'));
+  const perempuan = sortByAge(_jamaahCache.filter(j => j.jenis_kelamin === 'P'));
 
   let rows = '';
   if (activeSesi.jenis === 'umum') {
     if (laki.length) {
-      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#dcfce7;font-weight:700;color:#166534;font-size:12px">👨 Laki-laki (${laki.length})</td></tr>`;
+      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#dcfce7;font-weight:700;color:#166534;font-size:12px">👳 Laki-laki (${laki.length})</td></tr>`;
       rows += laki.map((j,i) => buatRowPDF(j, i+1)).join('');
     }
     if (perempuan.length) {
-      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#fce7f3;font-weight:700;color:#be185d;font-size:12px">👩 Perempuan (${perempuan.length})</td></tr>`;
+      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#fce7f3;font-weight:700;color:#be185d;font-size:12px">🧕 Perempuan (${perempuan.length})</td></tr>`;
       rows += perempuan.map((j,i) => buatRowPDF(j, i+1)).join('');
     }
   } else {
-    rows = _jamaahCache.map((j,i) => buatRowPDF(j, i+1)).join('');
+    rows = sortByAge(_jamaahCache).map((j,i) => buatRowPDF(j, i+1)).join('');
   }
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
