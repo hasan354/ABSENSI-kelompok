@@ -428,7 +428,7 @@ async function renderJamaah(q='') {
       <div class="list-item">
         <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
         <div class="info">
-          <div class="nama">${j.nama}${msBadge} <span style="font-size:11px;color:var(--abu)">${j.jenis_kelamin==='P'?'P':'L'}${usiaStr}</span></div>
+          <div class="nama">${j.nama}${msBadge} <span style="font-size:11px;color:#1e40af">${j.jenis_kelamin==='P'?'Perempuan':'Laki-laki'}${usiaStr}</span></div>
           <div class="meta">${j.hp || '—'}</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}','${j.jenis_kelamin||'L'}','${j.tgl_lahir||''}',${!!j.is_ms})">Edit</button>
