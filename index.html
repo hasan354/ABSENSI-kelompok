@@ -207,9 +207,9 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
       </div>
     </div>
     <div class="stats" style="grid-template-columns:repeat(5,1fr)">
-      <div class="stat"><div class="stat-n" id="st-hadir" style="color:var(--hijau-muda)">0</div><div class="stat-l">Hadir</div></div>
-      <div class="stat"><div class="stat-n" id="st-ijin" style="color:var(--biru-muda)">0</div><div class="stat-l">Ijin</div></div>
-      <div class="stat"><div class="stat-n" id="st-tanpa" style="color:var(--merah-muda)">0</div><div class="stat-l">Tanpa Ket</div></div>
+      <div class="stat"><div class="stat-n" id="st-hadir" style="color:var(--hijau-muda)">0</div><div class="stat-l">Hadir</div><div id="st-hadir-detail" style="font-size:10px;color:var(--abu);margin-top:2px"></div></div>
+      <div class="stat"><div class="stat-n" id="st-ijin" style="color:var(--biru-muda)">0</div><div class="stat-l">Ijin</div><div id="st-ijin-detail" style="font-size:10px;color:var(--abu);margin-top:2px"></div></div>
+      <div class="stat"><div class="stat-n" id="st-tanpa" style="color:var(--merah-muda)">0</div><div class="stat-l">Tanpa Ket</div><div id="st-tanpa-detail" style="font-size:10px;color:var(--abu);margin-top:2px"></div></div>
       <div class="stat"><div class="stat-n" id="st-infaq1" style="color:var(--hijau);font-size:13px">Rp 0</div><div class="stat-l">Infaq 1</div></div>
       <div class="stat"><div class="stat-n" id="st-infaq2" style="color:var(--hijau);font-size:13px">Rp 0</div><div class="stat-l">Infaq 2</div></div>
     </div>
@@ -603,10 +603,25 @@ function setStatus(id, st) {
 }
 
 function updateStat() {
-  const v = Object.values(absensiTemp);
-  document.getElementById('st-hadir').textContent = v.filter(x=>x==='hadir').length;
-  document.getElementById('st-ijin').textContent = v.filter(x=>x==='ijin').length;
-  document.getElementById('st-tanpa').textContent = v.filter(x=>x==='tanpa').length;
+  const ids = Object.keys(absensiTemp);
+  const byId = id => _jamaahCache.find(j => j.id === id);
+
+  const hadir = ids.filter(id => absensiTemp[id] === 'hadir');
+  const ijin  = ids.filter(id => absensiTemp[id] === 'ijin');
+  const tanpa = ids.filter(id => absensiTemp[id] === 'tanpa');
+
+  const rinci = (arr) => {
+    const l = arr.filter(id => byId(id)?.jenis_kelamin !== 'P').length;
+    const p = arr.filter(id => byId(id)?.jenis_kelamin === 'P').length;
+    return l || p ? `👳${l} 🧕${p}` : '';
+  };
+
+  document.getElementById('st-hadir').textContent = hadir.length;
+  document.getElementById('st-ijin').textContent = ijin.length;
+  document.getElementById('st-tanpa').textContent = tanpa.length;
+  document.getElementById('st-hadir-detail').textContent = rinci(hadir);
+  document.getElementById('st-ijin-detail').textContent = rinci(ijin);
+  document.getElementById('st-tanpa-detail').textContent = rinci(tanpa);
 }
 
 async function simpanInfaq() {
