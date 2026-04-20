@@ -251,6 +251,7 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
     </div>
   </div>
   <div style="text-align:center;padding:20px 0;font-size:12px;color:var(--abu)">Absensi Pengajian v4.0 — Supabase Edition</div>
+  <button id="install-btn" class="btn btn-primary" style="display:none;margin:0 auto 16px">📱 Install Aplikasi</button>
 </div>
 
 </div>
@@ -1032,11 +1033,31 @@ load();
 // Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/ABSENSI-kelompok/sw.js', { scope: '/ABSENSI-kelompok/' })
-      .then(reg => console.log('SW registered:', reg.scope))
-      .catch(err => console.log('SW error:', err));
+    const swPath = window.location.pathname.endsWith('/') 
+      ? window.location.pathname + 'sw.js' 
+      : window.location.pathname.replace(/\/[^/]*$/, '/sw.js');
+    navigator.serviceWorker.register(swPath)
+      .then(reg => console.log('✅ SW registered:', reg.scope))
+      .catch(err => console.error('❌ SW error:', err));
   });
 }
+
+// Install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-btn').style.display = 'block';
+});
+
+document.getElementById('install-btn')?.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} install`);
+  deferredPrompt = null;
+  document.getElementById('install-btn').style.display = 'none';
+});
 </script>
 </body>
 </html>
