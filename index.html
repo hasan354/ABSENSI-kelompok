@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Absensi Pengajian</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1a6b45">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Absensi">
@@ -207,9 +210,9 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
       </div>
       <div class="sesi-actions">
         <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="kembaliKeSesi()">← Sesi Lain</button>
-
         <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="downloadPDF()">⬇️ Detail Laporan</button>
         <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="downloadRekap()">📊 Buat Laporan</button>
+        <button class="btn btn-ghost btn-sm" style="background:#fff;border-color:#fff;color:#1a6b45;font-weight:700;margin-left:auto" onclick="selesaiAbsensi()">✅ Selesai</button>
       </div>
     </div>
     <div class="stats" style="grid-template-columns:repeat(5,1fr)">
