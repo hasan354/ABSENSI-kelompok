@@ -85,6 +85,12 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 .badge-open { background:#dcfce7; color:var(--hijau); }
 .badge-done { background:#f1f5f9; color:var(--abu); }
 .config-box { background:#fffbeb; border:1.5px solid #fde68a; border-radius:8px; padding:12px; margin-bottom:12px; font-size:12px; color:#92400e; }
+.install-banner { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:calc(100% - 32px); max-width:568px; background:white; border-radius:16px; padding:14px 20px; z-index:100; box-shadow:0 4px 16px rgba(0,0,0,0.15); align-items:center; gap:12px; }
+.install-banner.on { display:flex; }
+.install-banner .ib-text { flex:1; font-size:13px; color:#333; }
+.install-banner .ib-text b { display:block; font-size:14px; margin-bottom:2px; }
+.install-banner .ib-btn { background:#1a6b45; color:white; border:none; border-radius:10px; padding:10px 16px; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap; }
+.install-banner .ib-close { background:none; border:none; font-size:20px; color:#aaa; cursor:pointer; padding:4px; }
 </style>
 </head>
 <body>
@@ -251,10 +257,19 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
     </div>
   </div>
   <div style="text-align:center;padding:20px 0;font-size:12px;color:var(--abu)">Absensi Pengajian v4.0 — Supabase Edition</div>
-  <button id="install-btn" class="btn btn-primary" style="display:none;margin:0 auto 16px">📱 Install Aplikasi</button>
 </div>
 
 </div>
+<div class="install-banner" id="install-banner">
+  <div style="font-size:28px">🕌</div>
+  <div class="ib-text">
+    <b>Pasang ke Layar Utama</b>
+    Buka seperti aplikasi, tanpa browser
+  </div>
+  <button class="ib-btn" id="install-btn">Pasang</button>
+  <button class="ib-close" onclick="tutupBanner()">✕</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1047,17 +1062,28 @@ let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById('install-btn').style.display = 'block';
+  if (!localStorage.getItem('install-dismissed')) {
+    document.getElementById('install-banner').classList.add('on');
+  }
 });
 
 document.getElementById('install-btn')?.addEventListener('click', async () => {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
   const { outcome } = await deferredPrompt.userChoice;
-  console.log(`User ${outcome === 'accepted' ? 'accepted' : 'dismissed'} install`);
   deferredPrompt = null;
-  document.getElementById('install-btn').style.display = 'none';
+  document.getElementById('install-banner').classList.remove('on');
+  if (outcome === 'accepted') toast('✅ Aplikasi dipasang!');
 });
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('on');
+});
+
+function tutupBanner() {
+  document.getElementById('install-banner').classList.remove('on');
+  localStorage.setItem('install-dismissed', '1');
+}
 </script>
 </body>
 </html>
