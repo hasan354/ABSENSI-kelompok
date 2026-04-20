@@ -1,7 +1,10 @@
-const CACHE = 'absensi-v1';
+const CACHE = 'absensi-v2';
 const ASSETS = [
-  './index.html',
-  './manifest.json'
+  '/ABSENSI-kelompok/',
+  '/ABSENSI-kelompok/index.html',
+  '/ABSENSI-kelompok/manifest.json',
+  '/ABSENSI-kelompok/icon-192.png',
+  '/ABSENSI-kelompok/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
