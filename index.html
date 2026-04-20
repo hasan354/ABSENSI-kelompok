@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Absensi Pengajian</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a6b45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Absensi">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -202,7 +207,7 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
       </div>
       <div class="sesi-actions">
         <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="kembaliKeSesi()">← Sesi Lain</button>
-        <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="selesaiAbsensi()">✅ Selesai</button>
+
         <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="downloadPDF()">⬇️ Detail Laporan</button>
         <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="downloadRekap()">📊 Buat Laporan</button>
       </div>
@@ -595,7 +600,7 @@ function renderAbsensi(q='', jamaahList=null) {
       <div style="margin-top:6px">
         <input type="text" placeholder="Keterangan ijin..." value="${ket}"
           style="font-size:12px;padding:6px 10px;border:1.5px solid #bfdbfe;border-radius:6px;background:#eff6ff;width:100%"
-          oninput="keteranganTemp['${j.id}']=this.value">
+          oninput="keteranganTemp['${j.id}']=this.value;autoSave('${j.id}')">
       </div>` : '';
     return `
     <div class="abs-row ${st}" style="flex-wrap:wrap">
@@ -623,13 +628,48 @@ function renderAbsensi(q='', jamaahList=null) {
   updateStat();
 }
 
-function setStatus(id, st) {
+async function setStatus(id, st) {
   absensiTemp[id] = st;
   if (st !== 'ijin') {
-    // hapus keterangan kalau bukan ijin
     delete keteranganTemp[id];
   }
   renderAbsensi();
+  await autoSave(id);
+}
+
+let _saveTimer = {};
+async function autoSave(jamaah_id) {
+  clearTimeout(_saveTimer[jamaah_id]);
+  _saveTimer[jamaah_id] = setTimeout(async () => {
+    if (!activeSesi) return;
+    try {
+      showSaveIndicator('💾 Menyimpan...');
+      await sbUpsert('absensi', [{
+        sesi_id: activeSesi.id,
+        jamaah_id,
+        status: absensiTemp[jamaah_id] || 'tanpa',
+        keterangan: keteranganTemp[jamaah_id] || ''
+      }], 'sesi_id,jamaah_id');
+      showSaveIndicator('✅ Tersimpan');
+    } catch(e) {
+      showSaveIndicator('❌ Gagal simpan');
+    }
+  }, 500);
+}
+
+let _saveIndicatorTimer;
+function showSaveIndicator(msg) {
+  let el = document.getElementById('save-indicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'save-indicator';
+    el.style.cssText = 'position:fixed;top:12px;right:12px;background:#1a6b45;color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;z-index:999;transition:.3s;opacity:1';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(_saveIndicatorTimer);
+  _saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 2000);
 }
 
 function updateStat() {
@@ -676,17 +716,10 @@ function updateStatInfaq() {
 async function selesaiAbsensi() {
   if (!activeSesi) return;
   try {
-    // Upsert semua absensi sekaligus
-    const rows = Object.entries(absensiTemp).map(([jamaah_id, status]) => ({
-      sesi_id: activeSesi.id, jamaah_id, status,
-      keterangan: keteranganTemp[jamaah_id] || ''
-    }));
-    if (rows.length) await sbUpsert('absensi', rows, 'sesi_id,jamaah_id');
-    // Tandai sesi selesai
     await sbPatch('sesi?id=eq.' + activeSesi.id, { selesai: true });
-    toast('✅ Absensi tersimpan ke Supabase');
+    toast('✅ Sesi ditandai selesai');
     kembaliKeSesi();
-  } catch(e) { toast('❌ Gagal simpan: ' + e.message); }
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
 }
 
 // modal edit
@@ -992,6 +1025,13 @@ function load() {
   if (CFG.url && CFG.key) renderJamaah();
 }
 load();
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
 </script>
 </body>
 </html>
