@@ -850,7 +850,7 @@ function downloadRekap() {
     <div class="infaq-row"><span>Infaq 2</span><span>Rp ${inf2.toLocaleString('id-ID')}</span></div>
     <div class="infaq-row"><span>Total Infaq</span><span>Rp ${(inf1+inf2).toLocaleString('id-ID')}</span></div>
   </div>
-  <div class="foot"><span>${majelis}</span><span>Dicetak: ${new Date().toLocaleString('id-ID')}</span></div>
+  <div class="foot"><span>Dicetak: ${new Date().toLocaleString('id-ID')}</span></div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
   <script>
@@ -1019,7 +1019,6 @@ function downloadPDF() {
   </table>
   </div>
   <div class="footer">
-    <span>© ${majelis}</span>
     <span>Dicetak: ${new Date().toLocaleString('id-ID')}</span>
   </div>
   <script>window.onload=()=>{window.print();}<\/script>
