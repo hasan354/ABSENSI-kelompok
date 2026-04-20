@@ -2,7 +2,7 @@
   "name": "Absensi Pengajian",
   "short_name": "Absensi",
   "description": "Sistem manajemen absensi jamaah pengajian",
-  "start_url": "/ABSENSI-kelompok/index.html",
+  "start_url": "/ABSENSI-kelompok/",
   "scope": "/ABSENSI-kelompok/",
   "display": "standalone",
   "background_color": "#f8f7f4",
@@ -12,12 +12,14 @@
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
