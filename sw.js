@@ -21,9 +21,27 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Untuk request ke Supabase, selalu ambil dari network
+  // Skip non-GET dan request ke Supabase
+  if (e.request.method !== 'GET') return;
   if (e.request.url.includes('supabase.co')) return;
+  if (e.request.url.includes('fonts.googleapis.com')) return;
+  if (e.request.url.includes('cdnjs.cloudflare.com')) return;
+
   e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(response => {
+        // Hanya cache response yang valid
+        if (!response || response.status !== 200 || response.type === 'opaque') {
+          return response;
+        }
+        const clone = response.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return response;
+      }).catch(() => {
+        // Fallback ke index.html kalau offline
+        return caches.match('./index.html');
+      });
+    })
   );
 });
