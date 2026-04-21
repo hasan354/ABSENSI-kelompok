@@ -91,6 +91,14 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 .install-banner .ib-text b { display:block; font-size:14px; margin-bottom:2px; }
 .install-banner .ib-btn { background:#1a6b45; color:white; border:none; border-radius:10px; padding:10px 16px; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap; }
 .install-banner .ib-close { background:none; border:none; font-size:20px; color:#aaa; cursor:pointer; padding:4px; }
+
+/* Filter Cepat Buttons */
+.filter-cepat-wrap { margin-bottom:12px; }
+.filter-cepat-label { font-size:11px; font-weight:700; color:var(--abu); margin-bottom:6px; }
+.filter-cepat-btns { display:flex; gap:6px; flex-wrap:wrap; }
+.btn-filter { padding:6px 12px; border-radius:20px; border:1.5px solid var(--hijau); background:#f0fdf4; color:var(--hijau); font-size:11px; font-weight:700; cursor:pointer; width:auto; transition:.15s; }
+.btn-filter:hover { background:var(--hijau); color:#fff; }
+.btn-filter.active-filter { background:var(--hijau); color:#fff; }
 </style>
 </head>
 <body>
@@ -103,6 +111,7 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 <div class="tabs">
   <button class="tab active" onclick="switchTab('jamaah',this)">Data Jamaah</button>
   <button class="tab" onclick="switchTab('absensi',this)">Absensi</button>
+  <button class="tab" onclick="switchTab('rekap',this)">Rekap Jamaah</button>
   <button class="tab" onclick="switchTab('setting',this)">Pengaturan</button>
 </div>
 
@@ -157,7 +166,6 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 
 <!-- TAB ABSENSI -->
 <div id="tab-absensi" class="panel">
-  <!-- Daftar Sesi -->
   <div id="view-sesi-list">
   <div class="card" style="background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff">
     <div class="card-title" onclick="toggleFormSesi()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#fff">
@@ -165,12 +173,21 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
     </div>
       <div id="form-sesi" class="hidden">
       <div class="form-group">
+        <label style="color:rgba(255,255,255,.8)">Kategori Jamaah</label>
+        <div style="display:flex;gap:6px">
+          <button id="cat-umum" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihKategori('umum')">🕌 Umum</button>
+          <button id="cat-keputrian" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihKategori('keputrian')">🧕 Keputrian</button>
+          <button id="cat-ms" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihKategori('ms')">⭐ MS</button>
+        </div>
+      </div>
+      <div class="form-group">
         <label style="color:rgba(255,255,255,.8)">Jenis Pengajian</label>
         <select id="s-jenis" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.95);color:#1a6b45;font-size:13px;font-weight:600;outline:none" onchange="updateNamaSesi()">
           <option value="" style="color:#666">-- Pilih Jenis --</option>
           <option value="Sambung Daerah" style="color:#333">Sambung Daerah</option>
           <option value="Sambung Desa" style="color:#333">Sambung Desa</option>
-          <option value="Sambung Kelompok" style="color:#333">Sambung Kelompok</option>
+          <option value="Sambung Kelompok malam Rabu" style="color:#333">Sambung Kelompok malam Rabu</option>
+          <option value="Sambung Kelompok malam Sabtu" style="color:#333">Sambung Kelompok malam Sabtu</option>
           <option value="Penyampaian Teks" style="color:#333">Penyampaian Teks</option>
           <option value="Pengajian Ibu-Ibu (Keputrian)" style="color:#333">Pengajian Ibu-Ibu (Keputrian)</option>
         </select>
@@ -238,6 +255,49 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
   </div>
 </div>
 
+<!-- TAB REKAP JAMAAH -->
+<div id="tab-rekap" class="panel">
+  <div class="card">
+    <div class="card-title">Rekap Absensi Per Jamaah</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-primary btn-sm" onclick="showFilterSesiModal()" style="flex:1">📊 Download PDF (Filter Sesi)</button>
+    </div>
+    <div class="search"><input type="text" placeholder="Cari nama jamaah..." oninput="renderRekapJamaah(this.value)"></div>
+    <div id="list-rekap"><div class="loader">Memuat data rekap...</div></div>
+  </div>
+  
+  <!-- Detail Rekap Individual -->
+  <div id="detail-rekap" class="hidden">
+    <div class="card" style="background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="avatar" id="rekap-avatar" style="width:48px;height:48px;font-size:20px;background:rgba(255,255,255,.2)">👳</div>
+        <div style="flex:1">
+          <div style="font-size:18px;font-weight:700" id="rekap-nama">Nama Jamaah</div>
+          <div style="font-size:12px;opacity:.8" id="rekap-info">Info jamaah</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff" onclick="tutupDetailRekap()">✕ Tutup</button>
+      </div>
+    </div>
+    
+    <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="stat-n" id="rk-total" style="color:var(--hijau)">0</div><div class="stat-l">Total Sesi</div></div>
+      <div class="stat"><div class="stat-n" id="rk-hadir" style="color:var(--hijau-muda)">0</div><div class="stat-l">Hadir</div></div>
+      <div class="stat"><div class="stat-n" id="rk-ijin" style="color:var(--biru-muda)">0</div><div class="stat-l">Ijin</div></div>
+      <div class="stat"><div class="stat-n" id="rk-tanpa" style="color:var(--merah-muda)">0</div><div class="stat-l">Tanpa Ket</div></div>
+    </div>
+    
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary btn-sm" onclick="downloadRekapJamaahPDF()" style="flex:1">⬇️ Download PDF Bulanan</button>
+      <button class="btn btn-ghost btn-sm" onclick="tutupDetailRekap()">✕ Tutup</button>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">Riwayat Kehadiran</div>
+      <div id="list-riwayat"></div>
+    </div>
+  </div>
+</div>
+
 <!-- TAB SETTING -->
 <div id="tab-setting" class="panel">
   <div class="card">
@@ -283,7 +343,6 @@ const DEFAULT_CFG = {
   nama: ''
 };
 const saved = JSON.parse(localStorage.getItem('absensiCfg') || '{}');
-// Pakai default jika url/key tidak ada di localStorage
 let CFG = {
   url: saved.url || DEFAULT_CFG.url,
   key: saved.key || DEFAULT_CFG.key,
@@ -295,12 +354,20 @@ let keteranganTemp = {};
 let selectedJK = 'L';
 let selectedMS = false;
 let selectedJenis = 'umum';
+let selectedKategori = 'umum';
 
 function toggleFormSesi() {
   const f = document.getElementById('form-sesi');
   const icon = document.getElementById('sesi-toggle-icon');
   const hidden = f.classList.toggle('hidden');
   icon.textContent = hidden ? '＋' : '－';
+  // Isi tanggal hari ini secara otomatis saat form dibuka
+  if (!hidden) {
+    const today = new Date().toISOString().split('T')[0];
+    if (!document.getElementById('s-tgl').value) {
+      document.getElementById('s-tgl').value = today;
+    }
+  }
 }
 
 function toggleForm() {
@@ -326,11 +393,11 @@ function pilihJK(jk) {
   document.getElementById('jk-p').style.cssText = 'flex:1;padding:9px';
 }
 
-function pilihJenis(j) {
-  selectedJenis = j;
+function pilihKategori(cat) {
+  selectedKategori = cat;
   ['umum','keputrian','ms'].forEach(k => {
-    const el = document.getElementById('jp-'+k);
-    el.className = 'btn btn-sm ' + (k===j ? 'btn-primary' : 'btn-ghost');
+    const el = document.getElementById('cat-'+k);
+    el.className = 'btn btn-sm ' + (k===cat ? 'btn-primary' : 'btn-ghost');
     el.style.cssText = 'flex:1;padding:9px';
   });
 }
@@ -341,17 +408,12 @@ function updateNamaSesi() {
     document.getElementById('s-nama').value = '';
     return;
   }
-  
-  // Dapatkan bulan saat ini dalam bahasa Indonesia
   const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
                           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   const now = new Date();
   const bulan = bulanIndonesia[now.getMonth()];
   const tahun = now.getFullYear();
-  
-  // Format nama sesi otomatis
-  const namaSesi = `${jenis} - ${bulan} ${tahun}`;
-  document.getElementById('s-nama').value = namaSesi;
+  document.getElementById('s-nama').value = `${jenis} - ${bulan} ${tahun}`;
 }
 
 function hitungUsia(tgl) {
@@ -417,6 +479,7 @@ function switchTab(name, btn) {
   btn.classList.add('active');
   if (name === 'absensi') renderSesiList();
   if (name === 'jamaah') renderJamaah();
+  if (name === 'rekap') renderRekapJamaah();
 }
 function saveSet() {
   CFG = {
@@ -506,13 +569,10 @@ async function buatSesi() {
   if (!jenis) return toast('⚠️ Pilih jenis pengajian dulu');
   
   try {
-    // Mapping jenis pengajian ke kategori filter
-    let jenisFilter = 'umum';
-    if (jenis === 'Pengajian Ibu-Ibu (Keputrian)') jenisFilter = 'keputrian';
-    
-    const [sesi] = await sbPost('sesi', { nama, tanggal, waktu, selesai: false, jenis: jenisFilter });
+    const [sesi] = await sbPost('sesi', { nama, tanggal, waktu, selesai: false, jenis: selectedKategori });
     document.getElementById('s-nama').value = '';
     document.getElementById('s-jenis').value = '';
+    selectedKategori = 'umum'; pilihKategori('umum');
     toast('✅ Sesi dibuat');
     await bukaAbsensi(sesi);
   } catch(e) { toast('❌ Gagal: ' + e.message); }
@@ -531,12 +591,9 @@ async function renderSesiList() {
     el.innerHTML = data.map(s => {
       const tgl = new Date(s.tanggal).toLocaleDateString('id-ID', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
       const badge = s.selesai ? '<span class="sesi-badge badge-done">Selesai</span>' : '<span class="sesi-badge badge-open">Aktif</span>';
-      
-      // Tampilkan label jenis yang lebih deskriptif
       let jLabel = '🕌 Umum';
       if (s.jenis === 'keputrian') jLabel = '🧕 Keputrian';
       else if (s.jenis === 'ms') jLabel = '⭐ MS';
-      
       return `
         <div class="sesi-card" onclick="bukaAbsensi(${JSON.stringify(s).replace(/"/g,'&quot;')})">
           <div class="avatar" style="background:${s.selesai?'var(--abu)':'var(--hijau)'}">📋</div>
@@ -595,27 +652,22 @@ async function bukaAbsensi(sesi) {
   activeSesi = sesi;
   absensiTemp = {};
 
-  // Load jamaah & existing absensi
   try {
     const [jamaahList, absensiList] = await Promise.all([
       sbGet('jamaah?order=nama.asc'),
       sbGet('absensi?sesi_id=eq.' + sesi.id)
     ]);
 
-    // Filter jamaah sesuai jenis sesi
     let filtered = jamaahList;
     if (sesi.jenis === 'keputrian') filtered = jamaahList.filter(j => j.jenis_kelamin === 'P');
     else if (sesi.jenis === 'ms') filtered = jamaahList.filter(j => j.is_ms);
-    else if (sesi.jenis === 'umum') filtered = jamaahList; // Semua jamaah
 
-    // Init temp dari data existing, default tanpa
     filtered.forEach(j => {
       const existing = absensiList.find(a => a.jamaah_id === j.id);
       absensiTemp[j.id] = existing ? existing.status : 'tanpa';
       if (existing && existing.keterangan) keteranganTemp[j.id] = existing.keterangan;
     });
 
-    // Tampilkan view absensi
     document.getElementById('view-sesi-list').classList.add('hidden');
     document.getElementById('view-absensi').classList.remove('hidden');
 
@@ -644,7 +696,6 @@ function renderAbsensi(q='', jamaahList=null) {
   const el = document.getElementById('list-absensi');
   const data = _jamaahCache.filter(j => j.nama.toLowerCase().includes(q.toLowerCase()));
 
-  // Pisah L dan P (kecuali keputrian/ms yang sudah difilter)
   const laki = data.filter(j => j.jenis_kelamin !== 'P');
   const perempuan = data.filter(j => j.jenis_kelamin === 'P');
 
@@ -677,10 +728,8 @@ function renderAbsensi(q='', jamaahList=null) {
     if (laki.length) html += `<div style="font-size:12px;font-weight:700;color:var(--hijau);margin:8px 0 4px">👳 Laki-laki (${laki.length})</div>` + laki.map(buatBaris).join('');
     if (perempuan.length) html += `<div style="font-size:12px;font-weight:700;color:#be185d;margin:12px 0 4px">🧕 Perempuan (${perempuan.length})</div>` + perempuan.map(buatBaris).join('');
   } else if (activeSesi?.jenis === 'keputrian') {
-    // Keputrian: tampilkan semua (sudah difilter perempuan di bukaAbsensi)
     html = data.map(buatBaris).join('');
   } else {
-    // Jenis lain (Sambung Daerah, dll): tampilkan semua jamaah
     html = data.map(buatBaris).join('');
   }
   el.innerHTML = html || '<div class="empty"><div class="empty-icon">👥</div>Tidak ada jamaah</div>';
@@ -689,9 +738,7 @@ function renderAbsensi(q='', jamaahList=null) {
 
 async function setStatus(id, st) {
   absensiTemp[id] = st;
-  if (st !== 'ijin') {
-    delete keteranganTemp[id];
-  }
+  if (st !== 'ijin') delete keteranganTemp[id];
   renderAbsensi();
   await autoSave(id);
 }
@@ -762,7 +809,7 @@ async function simpanInfaq() {
   updateStatInfaq();
   try {
     await sbPatch('sesi?id=eq.' + activeSesi.id, { infaq1, infaq2 });
-  } catch(e) { /* silent save */ }
+  } catch(e) { /* silent */ }
 }
 
 function updateStatInfaq() {
@@ -781,7 +828,6 @@ async function selesaiAbsensi() {
   } catch(e) { toast('❌ Gagal: ' + e.message); }
 }
 
-// modal edit
 function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false) {
   const modal = document.createElement('div');
   modal.id = 'modal-edit';
@@ -813,6 +859,7 @@ function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false) {
     </div>`;
   document.body.appendChild(modal);
 }
+
 async function simpanEditJamaah(id) {
   const nama = document.getElementById('edit-nama').value.trim();
   const hp   = document.getElementById('edit-hp').value.trim();
@@ -827,11 +874,429 @@ async function simpanEditJamaah(id) {
     renderJamaah();
   } catch(e) { toast('❌ Gagal: ' + e.message); }
 }
+
+// ── REKAP JAMAAH ─────────────────────────────────────────
+async function renderRekapJamaah(q='') {
+  if (!checkCfg()) return;
+  const el = document.getElementById('list-rekap');
+  const detailEl = document.getElementById('detail-rekap');
+  if (!detailEl.classList.contains('hidden')) return;
+  el.innerHTML = '<div class="loader">Memuat...</div>';
+  try {
+    const jamaahList = await sbGet('jamaah?order=nama.asc');
+    if (!jamaahList.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">🕌</div>Belum ada jamaah</div>';
+      return;
+    }
+    const filtered = q ? jamaahList.filter(j => j.nama.toLowerCase().includes(q.toLowerCase())) : jamaahList;
+    el.innerHTML = filtered.map(j => {
+      const msBadge = j.is_ms ? ' <span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">⭐MS</span>' : '';
+      return `
+      <div class="list-item" style="cursor:pointer" onclick="showDetailRekap('${j.id}')">
+        <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
+        <div class="info">
+          <div class="nama">${j.nama}${msBadge}</div>
+          <div class="meta">${j.jenis_kelamin==='P'?'Perempuan':'Laki-laki'} ${j.hp ? '· '+j.hp : ''}</div>
+        </div>
+        <div style="font-size:12px;color:var(--hijau);font-weight:600">Lihat →</div>
+      </div>`;
+    }).join('');
+    if (!filtered.length) el.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>Tidak ditemukan</div>';
+  } catch(e) { el.innerHTML = '<div class="empty">❌ Gagal memuat: ' + e.message + '</div>'; }
+}
+
+async function showDetailRekap(jamaahId) {
+  if (!checkCfg()) return;
+  try {
+    const jamaahList = await sbGet('jamaah?id=eq.' + jamaahId);
+    if (!jamaahList.length) return toast('❌ Jamaah tidak ditemukan');
+    const jamaah = jamaahList[0];
+    const sesiList = await sbGet('sesi?order=tanggal.desc');
+    const absensiList = await sbGet('absensi?jamaah_id=eq.' + jamaahId);
+    document.getElementById('list-rekap').classList.add('hidden');
+    document.getElementById('detail-rekap').classList.remove('hidden');
+    const usia = hitungUsia(jamaah.tgl_lahir);
+    const usiaStr = usia !== null ? ` · ${usia} thn` : '';
+    document.getElementById('rekap-avatar').textContent = jamaah.jenis_kelamin === 'P' ? '🧕' : '👳';
+    document.getElementById('rekap-nama').textContent = jamaah.nama;
+    document.getElementById('rekap-nama').dataset.jamaahId = jamaah.id;
+    const msLabel = jamaah.is_ms ? ' · ⭐MS' : '';
+    document.getElementById('rekap-info').textContent = `${jamaah.jenis_kelamin==='P'?'Perempuan':'Laki-laki'}${usiaStr}${msLabel}`;
+    const hadir = absensiList.filter(a => a.status === 'hadir').length;
+    const ijin = absensiList.filter(a => a.status === 'ijin').length;
+    const tanpa = absensiList.filter(a => a.status === 'tanpa').length;
+    document.getElementById('rk-total').textContent = absensiList.length;
+    document.getElementById('rk-hadir').textContent = hadir;
+    document.getElementById('rk-ijin').textContent = ijin;
+    document.getElementById('rk-tanpa').textContent = tanpa;
+    const riwayatEl = document.getElementById('list-riwayat');
+    if (!absensiList.length) {
+      riwayatEl.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Belum ada riwayat absensi</div>';
+      return;
+    }
+    const sesiMap = {};
+    sesiList.forEach(s => sesiMap[s.id] = s);
+    const sorted = absensiList.sort((a, b) => {
+      const sA = sesiMap[a.sesi_id], sB = sesiMap[b.sesi_id];
+      if (!sA || !sB) return 0;
+      return new Date(sB.tanggal) - new Date(sA.tanggal);
+    });
+    riwayatEl.innerHTML = sorted.map(a => {
+      const sesi = sesiMap[a.sesi_id];
+      if (!sesi) return '';
+      const tgl = new Date(sesi.tanggal).toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+      const statusLabel = a.status === 'hadir' ? '✅ Hadir' : a.status === 'ijin' ? '📋 Ijin' : '❓ Tanpa Ket';
+      const statusClass = a.status === 'hadir' ? 'hadir' : a.status === 'ijin' ? 'ijin' : 'tanpa';
+      const ket = a.keterangan ? `<div style="font-size:11px;color:var(--abu);margin-top:4px;font-style:italic">Ket: ${a.keterangan}</div>` : '';
+      return `
+      <div class="abs-row ${statusClass}">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:13px">${sesi.nama}</div>
+          <div style="font-size:11px;color:var(--abu);margin-top:2px">📅 ${tgl} ⏰ ${sesi.waktu||'—'}</div>
+          ${ket}
+        </div>
+        <div style="font-size:12px;font-weight:700;white-space:nowrap">${statusLabel}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { toast('❌ Gagal memuat: ' + e.message); }
+}
+
+function tutupDetailRekap() {
+  document.getElementById('detail-rekap').classList.add('hidden');
+  document.getElementById('list-rekap').classList.remove('hidden');
+  renderRekapJamaah();
+}
+
+// ── FILTER CEPAT ─────────────────────────────────────────
+// Pilih semua sesi berdasarkan kata kunci
+function filterCepat(keyword) {
+  const select = document.getElementById('select-sesi');
+  if (!select) return;
+
+  // Reset semua pilihan dulu
+  Array.from(select.options).forEach(opt => opt.selected = false);
+
+  // Tandai tombol aktif
+  document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
+  event.target.classList.add('active-filter');
+
+  // Pilih opsi yang cocok
+  let count = 0;
+  Array.from(select.options).forEach(opt => {
+    if (opt.text.toLowerCase().includes(keyword.toLowerCase())) {
+      opt.selected = true;
+      count++;
+    }
+  });
+
+  if (count > 0) {
+    toast(`✅ ${count} sesi "${keyword}" dipilih`);
+  } else {
+    toast(`⚠️ Tidak ada sesi "${keyword}" ditemukan`);
+  }
+}
+
+// ── FILTER SESI MODAL ────────────────────────────────────
+function showFilterSesiModal() {
+  if (!checkCfg()) return;
+  const now = new Date();
+  const bulanIni = now.getMonth();
+  const tahunIni = now.getFullYear();
+  const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-filter-sesi';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:20px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+      <div style="font-size:16px;font-weight:700;color:var(--hijau);margin-bottom:4px">📊 Filter Sesi Pengajian</div>
+      <div style="font-size:12px;color:var(--abu);margin-bottom:14px">Pilih sesi untuk bulan ${bulanIndonesia[bulanIni]} ${tahunIni}</div>
+
+      <!-- Filter Cepat -->
+      <div class="filter-cepat-wrap">
+        <div class="filter-cepat-label">⚡ Filter Cepat — klik untuk pilih semua sesi sejenis:</div>
+        <div class="filter-cepat-btns">
+          <button class="btn-filter" onclick="filterCepat('Sambung Kelompok')">Sambung Kelompok</button>
+          <button class="btn-filter" onclick="filterCepat('Sambung Daerah')">Sambung Daerah</button>
+          <button class="btn-filter" onclick="filterCepat('Sambung Desa')">Sambung Desa</button>
+          <button class="btn-filter" onclick="filterCepat('Penyampaian Teks')">Penyampaian Teks</button>
+          <button class="btn-filter" onclick="filterCepat('Keputrian')">Keputrian</button>
+        </div>
+      </div>
+
+      <div style="border-top:1.5px solid var(--border);margin:12px 0"></div>
+
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--abu);margin-bottom:6px">Atau pilih manual:</label>
+        <select id="select-sesi" multiple style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);min-height:180px" size="7">
+          <option value="">Memuat sesi...</option>
+        </select>
+        <div style="font-size:11px;color:var(--abu);margin-top:6px">💡 Tahan Ctrl/Cmd untuk pilih beberapa, atau gunakan Filter Cepat di atas</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-primary btn-sm" onclick="pilihSemuaSesiDropdown()" style="flex:1">✓ Semua Sesi</button>
+        <button class="btn btn-ghost btn-sm" onclick="hapusPilihanSesi()" style="flex:1">✕ Hapus Pilihan</button>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="document.getElementById('modal-filter-sesi').remove()">Batal</button>
+        <button class="btn btn-primary" onclick="downloadDenganFilter()">⬇️ Download PDF</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  loadSesiForFilter(bulanIni, tahunIni);
+}
+
+async function loadSesiForFilter(bulan, tahun) {
+  try {
+    const sesiList = await sbGet('sesi?order=tanggal.desc');
+    const sesiBulanIni = sesiList.filter(s => {
+      const tgl = new Date(s.tanggal);
+      return tgl.getMonth() === bulan && tgl.getFullYear() === tahun;
+    });
+    sesiBulanIni.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+    const select = document.getElementById('select-sesi');
+    if (!sesiBulanIni.length) {
+      select.innerHTML = '<option value="">Tidak ada sesi untuk bulan ini</option>';
+      return;
+    }
+    select.innerHTML = sesiBulanIni.map(s => {
+      const tgl = new Date(s.tanggal).toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+      return `<option value="${s.id}">${s.nama} - ${tgl}</option>`;
+    }).join('');
+  } catch(e) {
+    const select = document.getElementById('select-sesi');
+    if (select) select.innerHTML = '<option value="">❌ Gagal memuat</option>';
+  }
+}
+
+function pilihSemuaSesiDropdown() {
+  const select = document.getElementById('select-sesi');
+  Array.from(select.options).forEach(opt => opt.selected = true);
+  document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
+}
+
+function hapusPilihanSesi() {
+  const select = document.getElementById('select-sesi');
+  Array.from(select.options).forEach(opt => opt.selected = false);
+  document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active-filter'));
+}
+
+async function downloadDenganFilter() {
+  const select = document.getElementById('select-sesi');
+  const sesiIds = Array.from(select.selectedOptions).map(opt => opt.value).filter(v => v);
+  if (!sesiIds.length) return toast('⚠️ Pilih minimal 1 sesi');
+  document.getElementById('modal-filter-sesi').remove();
+  toast('⏳ Menyiapkan PDF...');
+  try {
+    const [jamaahList, sesiList, absensiList] = await Promise.all([
+      sbGet('jamaah?order=nama.asc'),
+      sbGet('sesi?order=tanggal.desc'),
+      sbGet('absensi?')
+    ]);
+    const now = new Date();
+    const bulanIni = now.getMonth();
+    const tahunIni = now.getFullYear();
+    const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const sesiDipilih = sesiList.filter(s => sesiIds.includes(s.id));
+    sesiDipilih.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+    generatePDFSemuaJamaah(jamaahList, sesiDipilih, absensiList, bulanIndonesia, bulanIni, tahunIni);
+  } catch(e) { toast('❌ Gagal download: ' + e.message); }
+}
+
+function generatePDFSemuaJamaah(jamaahList, sesiList, absensiList, bulanIndonesia, bulanIni, tahunIni) {
+  const sesiMap = {};
+  sesiList.forEach(s => sesiMap[s.id] = s);
+
+  let headerRows = '<tr><th style="text-align:left;min-width:180px">Nama Jamaah</th>';
+  sesiList.forEach(s => {
+    const tgl = new Date(s.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'short'});
+    headerRows += `<th style="font-size:10px;padding:6px 8px;white-space:nowrap">${tgl}<br>${s.nama.substring(0,20)}</th>`;
+  });
+  headerRows += '<th style="min-width:80px">Hadir</th><th style="min-width:80px">%</th></tr>';
+
+  let bodyRows = '';
+  jamaahList.forEach((j, idx) => {
+    const bgColor = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
+    let row = `<tr style="background:${bgColor}">`;
+    row += `<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-weight:600;font-size:11px">${j.nama}</td>`;
+    let hadirCount = 0;
+    sesiList.forEach(s => {
+      const absen = absensiList.find(a => a.jamaah_id === j.id && a.sesi_id === s.id);
+      if (absen) {
+        if (absen.status === 'hadir') { row += `<td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:center;background:#f0fdf4">✅</td>`; hadirCount++; }
+        else if (absen.status === 'ijin') { row += `<td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:center;background:#eff6ff">📋</td>`; }
+        else { row += `<td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:center;background:#fef2f2">❌</td>`; }
+      } else {
+        row += `<td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:center;color:#ccc">—</td>`;
+      }
+    });
+    const persen = sesiList.length > 0 ? Math.round((hadirCount / sesiList.length) * 100) : 0;
+    const persenColor = persen >= 75 ? '#166534' : persen >= 50 ? '#a16207' : '#991b1b';
+    row += `<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;font-size:12px">${hadirCount}/${sesiList.length}</td>`;
+    row += `<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;font-size:13px;color:${persenColor}">${persen}%</td>`;
+    row += '</tr>';
+    bodyRows += row;
+  });
+
+  const totalJamaah = jamaahList.length;
+  const totalSesi = sesiList.length;
+  const totalHadir = absensiList.filter(a => a.status === 'hadir' && sesiMap[a.sesi_id]).length;
+  const totalAbsensi = absensiList.filter(a => sesiMap[a.sesi_id]).length;
+  const avgKehadiran = totalAbsensi > 0 ? Math.round((totalHadir / totalAbsensi) * 100) : 0;
+
+  // Ambil nama sesi unik untuk judul PDF (jika filter cepat dipakai)
+  const namaUnik = [...new Set(sesiList.map(s => s.nama.split(' - ')[0]))].join(', ');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Rekap ${namaUnik} - ${bulanIndonesia[bulanIni]} ${tahunIni}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 24px 28px; color: #1a1a1a; font-size: 12px; }
+    .kop { background: linear-gradient(135deg, #1a6b45, #2d9461); color: #fff; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
+    .kop-icon { font-size: 32px; }
+    .kop-nama { font-size: 18px; font-weight: 700; }
+    .kop-sub { font-size: 12px; opacity: .85; margin-top: 3px; }
+    .kop-meta { margin-left: auto; text-align: right; font-size: 11px; opacity: .85; line-height: 1.7; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-item { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 10px; text-align: center; }
+    .stat-val { font-size: 22px; font-weight: 700; color: #166534; }
+    .stat-lbl { font-size: 11px; color: #555; margin-top: 4px; }
+    .legend { background: #fefce8; border: 1.5px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 11px; display: flex; gap: 16px; flex-wrap: wrap; }
+    .tbl-wrap { border: 2px solid #1a6b45; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #1a6b45 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 8px 6px; text-align: center; font-size: 10px; border-right: 1px solid rgba(255,255,255,.2); }
+    th:first-child { text-align: left; padding-left: 10px; }
+    th:last-child { border-right: none; }
+    td { padding: 6px 8px; border-bottom: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; font-size: 11px; }
+    td:first-child { padding-left: 10px; }
+    td:last-child { border-right: none; }
+    tr:last-child td { border-bottom: none; }
+    .footer { margin-top: 16px; padding-top: 12px; border-top: 2px solid #e5e7eb; font-size: 10px; color: #999; display: flex; justify-content: space-between; }
+    @media print { body { padding: 12px; } @page { size: landscape; margin: 1cm; } }
+  </style>
+</head>
+<body>
+  <div class="kop">
+    <div class="kop-icon">🕌</div>
+    <div>
+      <div class="kop-nama">Rekap Absensi — ${namaUnik}</div>
+      <div class="kop-sub">${CFG.nama || "Majelis Ta'lim"}</div>
+    </div>
+    <div class="kop-meta">
+      <div style="font-size:14px;font-weight:700">${bulanIndonesia[bulanIni]} ${tahunIni}</div>
+      <div>${totalSesi} sesi dipilih</div>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-val">${totalJamaah}</div><div class="stat-lbl">Total Jamaah</div></div>
+    <div class="stat-item"><div class="stat-val">${totalSesi}</div><div class="stat-lbl">Total Sesi</div></div>
+    <div class="stat-item"><div class="stat-val">${totalHadir}</div><div class="stat-lbl">Total Kehadiran</div></div>
+    <div class="stat-item"><div class="stat-val">${avgKehadiran}%</div><div class="stat-lbl">Rata-rata Hadir</div></div>
+  </div>
+  <div class="legend">
+    <div>✅ Hadir</div>
+    <div>📋 Ijin</div>
+    <div>❌ Tanpa Keterangan</div>
+    <div>— Belum Ada Data</div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>${headerRows}</thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  </div>
+  <div class="footer">
+    <span>Dicetak: ${new Date().toLocaleString('id-ID')}</span>
+    <span>Absensi Pengajian v4.0</span>
+  </div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+async function downloadRekapJamaahPDF() {
+  if (document.getElementById('detail-rekap').classList.contains('hidden')) return toast('⚠️ Pilih jamaah dulu');
+  try {
+    const jamaahId = document.getElementById('rekap-nama').dataset.jamaahId;
+    if (!jamaahId) return toast('❌ Data jamaah tidak ditemukan');
+    const jamaahList = await sbGet('jamaah?id=eq.' + jamaahId);
+    if (!jamaahList.length) return toast('❌ Jamaah tidak ditemukan');
+    const jamaah = jamaahList[0];
+    const sesiList = await sbGet('sesi?order=tanggal.desc');
+    const absensiList = await sbGet('absensi?jamaah_id=eq.' + jamaahId);
+    const now = new Date();
+    const bulanIni = now.getMonth();
+    const tahunIni = now.getFullYear();
+    const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const sesiMap = {};
+    sesiList.forEach(s => sesiMap[s.id] = s);
+    const absensiBulanIni = absensiList.filter(a => {
+      const sesi = sesiMap[a.sesi_id];
+      if (!sesi) return false;
+      const tgl = new Date(sesi.tanggal);
+      return tgl.getMonth() === bulanIni && tgl.getFullYear() === tahunIni;
+    });
+    const sorted = absensiBulanIni.sort((a, b) => {
+      const sA = sesiMap[a.sesi_id], sB = sesiMap[b.sesi_id];
+      if (!sA || !sB) return 0;
+      return new Date(sA.tanggal) - new Date(sB.tanggal);
+    });
+    const hadir = absensiBulanIni.filter(a => a.status === 'hadir').length;
+    const ijin = absensiBulanIni.filter(a => a.status === 'ijin').length;
+    const tanpa = absensiBulanIni.filter(a => a.status === 'tanpa').length;
+    const total = absensiBulanIni.length;
+    const persenHadir = total > 0 ? Math.round((hadir / total) * 100) : 0;
+    let rows = '';
+    sorted.forEach((a, idx) => {
+      const sesi = sesiMap[a.sesi_id];
+      if (!sesi) return;
+      const tgl = new Date(sesi.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'});
+      const statusLabel = a.status === 'hadir' ? '✅ Hadir' : a.status === 'ijin' ? '📋 Ijin' : '❓ Tanpa Ket';
+      const bgColor = a.status === 'hadir' ? '#f0fdf4' : a.status === 'ijin' ? '#eff6ff' : '#fef2f2';
+      const statusColor = a.status === 'hadir' ? '#166534' : a.status === 'ijin' ? '#1e40af' : '#991b1b';
+      const ket = a.keterangan ? `<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;color:#666;font-style:italic">${a.keterangan}</td>` : '<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#ccc">—</td>';
+      rows += `<tr style="background:${bgColor}">
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;font-size:12px">${idx + 1}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px">${tgl}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:600">${sesi.nama}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;color:${statusColor}">${statusLabel}</td>
+        ${ket}
+      </tr>`;
+    });
+    const usia = hitungUsia(jamaah.tgl_lahir);
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rekap ${jamaah.nama}</title>
+    <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;padding:28px 32px;color:#1a1a1a;font-size:13px}.kop{background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:14px}.kop-icon{font-size:32px}.kop-nama{font-size:18px;font-weight:700}.kop-sub{font-size:12px;opacity:.85;margin-top:3px}.kop-meta{margin-left:auto;text-align:right;font-size:11px;opacity:.85;line-height:1.7}.info-box{background:#f8f9fa;border:1.5px solid #e5e7eb;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.info-label{color:#666;margin-bottom:2px;font-size:12px}.info-value{font-weight:600;color:#1a1a1a}.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}.stat-box{border-radius:8px;padding:12px;text-align:center}.stat-val{font-size:22px;font-weight:700;line-height:1}.stat-lbl{font-size:11px;color:#555;margin-top:4px}.tbl-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden;margin-bottom:16px}table{width:100%;border-collapse:collapse}th{background:#1a6b45 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:10px 12px;text-align:left;font-size:11px;border-right:1px solid rgba(255,255,255,.2)}th:first-child{text-align:center;width:40px}th:last-child{border-right:none}td{padding:8px 12px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;font-size:12px}td:last-child{border-right:none}tr:last-child td{border-bottom:none}.footer{margin-top:16px;padding-top:12px;border-top:2px solid #e5e7eb;font-size:10px;color:#999;display:flex;justify-content:space-between}@media print{body{padding:16px}}</style>
+    </head><body>
+    <div class="kop"><div class="kop-icon">🕌</div><div><div class="kop-nama">Rekap Absensi Jamaah</div><div class="kop-sub">${CFG.nama||"Majelis Ta'lim"}</div></div><div class="kop-meta"><div style="font-size:14px;font-weight:700">${jamaah.nama}</div><div>${bulanIndonesia[bulanIni]} ${tahunIni}</div></div></div>
+    <div class="info-box"><div class="info-item"><div class="info-label">Jenis Kelamin</div><div class="info-value">${jamaah.jenis_kelamin==='P'?'Perempuan':'Laki-laki'}</div></div><div class="info-item"><div class="info-label">Usia</div><div class="info-value">${usia!==null?usia+' tahun':'—'}</div></div><div class="info-item"><div class="info-label">No. HP</div><div class="info-value">${jamaah.hp||'—'}</div></div><div class="info-item"><div class="info-label">Status MS</div><div class="info-value">${jamaah.is_ms?'⭐ Ya':'Tidak'}</div></div></div>
+    <div class="stats-grid"><div class="stat-box" style="background:#f0fdf4;border:1.5px solid #86efac"><div class="stat-val" style="color:#1a6b45">${total}</div><div class="stat-lbl">Total Sesi</div></div><div class="stat-box" style="background:#f0fdf4;border:1.5px solid #86efac"><div class="stat-val" style="color:#166534">${hadir}</div><div class="stat-lbl">Hadir</div></div><div class="stat-box" style="background:#eff6ff;border:1.5px solid #bfdbfe"><div class="stat-val" style="color:#1e40af">${ijin}</div><div class="stat-lbl">Ijin</div></div><div class="stat-box" style="background:#fef2f2;border:1.5px solid #fecaca"><div class="stat-val" style="color:#991b1b">${tanpa}</div><div class="stat-lbl">Tanpa Ket</div></div></div>
+    <div style="background:#fefce8;border:1.5px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px"><strong>📊 Persentase Kehadiran:</strong> <span style="font-size:16px;font-weight:700;color:#1a6b45">${persenHadir}%</span></div>
+    ${sorted.length?`<div class="tbl-wrap"><table><thead><tr><th>No</th><th>Tanggal</th><th>Nama Sesi</th><th>Status</th><th>Keterangan</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div style="text-align:center;padding:32px;color:#999">Tidak ada data absensi untuk bulan ini</div>'}
+    <div class="footer"><span>Dicetak: ${new Date().toLocaleString('id-ID')}</span><span>Absensi Pengajian v4.0</span></div>
+    <script>window.onload=()=>{window.print();}<\/script></body></html>`;
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+  } catch(e) { toast('❌ Gagal download: ' + e.message); }
+}
+
 function downloadRekap() {
   if (!activeSesi) return toast('⚠️ Tidak ada sesi aktif');
   const tgl = new Date(activeSesi.tanggal).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   const majelis = CFG.nama || 'Majelis Ta\'lim';
-  const jenisLabel = activeSesi.jenis === 'keputrian' ? 'Keputrian' : activeSesi.jenis === 'ms' ? 'MS' : 'Umum';
   const total = _jamaahCache.length;
   const hadirList = _jamaahCache.filter(j => absensiTemp[j.id] === 'hadir');
   const ijinList  = _jamaahCache.filter(j => absensiTemp[j.id] === 'ijin');
@@ -840,74 +1305,22 @@ function downloadRekap() {
   const iL = ijinList.filter(j=>j.jenis_kelamin!=='P').length,  iP = ijinList.filter(j=>j.jenis_kelamin==='P').length;
   const tL = tanpaList.filter(j=>j.jenis_kelamin!=='P').length, tP = tanpaList.filter(j=>j.jenis_kelamin==='P').length;
   const inf1 = activeSesi.infaq1||0, inf2 = activeSesi.infaq2||0;
-  const pct = n => total ? Math.round(n/total*100) : 0;
   const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .wrap{width:390px;max-width:100%}
-    .kop{background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
-    .kop h1{font-size:13px;font-weight:700;line-height:1.4}
-    .kop p{font-size:10px;opacity:.85;margin-top:3px}
-    .kop-right{text-align:right;font-size:10px;opacity:.9;line-height:1.8;flex-shrink:0;margin-left:8px}
-    .tbl-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden;margin-bottom:12px}
-    table{width:100%;border-collapse:collapse;font-size:11px}
-    th{background:#1a6b45;color:#fff;padding:8px 10px;text-align:center;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact;border-right:1px solid rgba(255,255,255,.2)}
-    th:first-child{text-align:left;border-right:1px solid rgba(255,255,255,.2)}
-    th:last-child{border-right:none}
-    td{padding:8px 10px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;text-align:center}
-    td:first-child{text-align:left;font-weight:600;color:#1a1a1a;background:#f9fafb}
-    td:last-child{border-right:none}
-    tr:nth-child(even) td:not(:first-child){background:#f9fafb}
-    tr:last-child td{background:#f0fdf4 !important;font-weight:700;border-bottom:none;color:#166534}
-    tr:last-child td:first-child{color:#166534}
-    .infaq-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden}
-    .infaq-head{background:#1a6b45;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .infaq-row{display:flex;justify-content:space-between;padding:8px 12px;font-size:11px;border-bottom:1px solid #e5e7eb}
-    .infaq-row:last-child{border-bottom:none;font-weight:700;background:#f0fdf4;color:#166534}
-    .foot{margin-top:12px;font-size:9px;color:#aaa;display:flex;justify-content:space-between}
-    @media print{body{padding:24px}}
-  </style></head><body><div class="wrap">
-  <div class="kop">
-    <div><h1>🕌 Laporan Absensi ${activeSesi.nama}</h1><p>${majelis} &nbsp;|&nbsp; ${tgl} &nbsp;⏰ ${activeSesi.waktu||'—'}</p></div>
-    <div class="kop-right"><div>👥 ${total} jamaah</div></div>
-  </div>
-  <div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr><th>Kelompok</th><th>Hadir</th><th>Ijin</th><th>Tanpa Ket</th><th>Total</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Laki-laki</td><td>${hL}</td><td>${iL}</td><td>${tL}</td><td>${hL+iL+tL}</td></tr>
-      <tr><td>Perempuan</td><td>${hP}</td><td>${iP}</td><td>${tP}</td><td>${hP+iP+tP}</td></tr>
-      <tr><td>Total</td><td>${hadirList.length}</td><td>${ijinList.length}</td><td>${tanpaList.length}</td><td>${total}</td></tr>
-    </tbody>
-  </table>
-  </div>
-  <div class="infaq-wrap">
-    <div class="infaq-head">💰 Rekapitulasi Infaq</div>
-    <div class="infaq-row"><span>Infaq 1</span><span>Rp ${inf1.toLocaleString('id-ID')}</span></div>
-    <div class="infaq-row"><span>Infaq 2</span><span>Rp ${inf2.toLocaleString('id-ID')}</span></div>
-    <div class="infaq-row"><span>Total Infaq</span><span>Rp ${(inf1+inf2).toLocaleString('id-ID')}</span></div>
-  </div>
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{width:390px;max-width:100%}.kop{background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}.kop h1{font-size:13px;font-weight:700;line-height:1.4}.kop p{font-size:10px;opacity:.85;margin-top:3px}.kop-right{text-align:right;font-size:10px;opacity:.9;line-height:1.8;flex-shrink:0;margin-left:8px}.tbl-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden;margin-bottom:12px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#1a6b45;color:#fff;padding:8px 10px;text-align:center;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact;border-right:1px solid rgba(255,255,255,.2)}th:first-child{text-align:left;border-right:1px solid rgba(255,255,255,.2)}th:last-child{border-right:none}td{padding:8px 10px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;text-align:center}td:first-child{text-align:left;font-weight:600;color:#1a1a1a;background:#f9fafb}td:last-child{border-right:none}tr:nth-child(even) td:not(:first-child){background:#f9fafb}tr:last-child td{background:#f0fdf4 !important;font-weight:700;border-bottom:none;color:#166534}tr:last-child td:first-child{color:#166534}.infaq-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden}.infaq-head{background:#1a6b45;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}.infaq-row{display:flex;justify-content:space-between;padding:8px 12px;font-size:11px;border-bottom:1px solid #e5e7eb}.infaq-row:last-child{border-bottom:none;font-weight:700;background:#f0fdf4;color:#166534}.foot{margin-top:12px;font-size:9px;color:#aaa;display:flex;justify-content:space-between}@media print{body{padding:24px}}</style></head><body><div class="wrap">
+  <div class="kop"><div><h1>🕌 Laporan Absensi ${activeSesi.nama}</h1><p>${majelis} | ${tgl} ⏰ ${activeSesi.waktu||'—'}</p></div><div class="kop-right"><div>👥 ${total} jamaah</div></div></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Kelompok</th><th>Hadir</th><th>Ijin</th><th>Tanpa Ket</th><th>Total</th></tr></thead><tbody>
+    <tr><td>Laki-laki</td><td>${hL}</td><td>${iL}</td><td>${tL}</td><td>${hL+iL+tL}</td></tr>
+    <tr><td>Perempuan</td><td>${hP}</td><td>${iP}</td><td>${tP}</td><td>${hP+iP+tP}</td></tr>
+    <tr><td>Total</td><td>${hadirList.length}</td><td>${ijinList.length}</td><td>${tanpaList.length}</td><td>${total}</td></tr>
+  </tbody></table></div>
+  <div class="infaq-wrap"><div class="infaq-head">💰 Rekapitulasi Infaq</div><div class="infaq-row"><span>Infaq 1</span><span>Rp ${inf1.toLocaleString('id-ID')}</span></div><div class="infaq-row"><span>Infaq 2</span><span>Rp ${inf2.toLocaleString('id-ID')}</span></div><div class="infaq-row"><span>Total Infaq</span><span>Rp ${(inf1+inf2).toLocaleString('id-ID')}</span></div></div>
   <div class="foot"><span>Dicetak: ${new Date().toLocaleString('id-ID')}</span></div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
-  <script>
-    window.onload = () => {
-      setTimeout(() => {
-        const el = document.querySelector('.wrap');
-        html2canvas(el, {scale:2, backgroundColor:'#f0f4f8', useCORS:true}).then(canvas => {
-          const a = document.createElement('a');
-          a.download = 'Laporan ABSENSI ${activeSesi.nama.replace(/\s+/g,' ')}.png';
-          a.href = canvas.toDataURL('image/png');
-          a.click();
-        });
-      }, 600);
-    };
-  <\/script></body></html>`);
+  <script>window.onload=()=>{setTimeout(()=>{const el=document.querySelector('.wrap');html2canvas(el,{scale:2,backgroundColor:'#f0f4f8',useCORS:true}).then(canvas=>{const a=document.createElement('a');a.download='Laporan ABSENSI ${activeSesi.nama.replace(/\s+/g,' ')}.png';a.href=canvas.toDataURL('image/png');a.click();});},600);};<\/script></body></html>`);
   w.document.close();
 }
+
 function downloadPDF() {
   if (!activeSesi || !_jamaahCache.length) return toast('⚠️ Tidak ada data absensi');
   const tgl = new Date(activeSesi.tanggal).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
@@ -922,13 +1335,7 @@ function downloadPDF() {
     const color = st === 'hadir' ? '#166534' : st === 'ijin' ? '#1e40af' : '#991b1b';
     const bg    = st === 'hadir' ? '#f0fdf4' : st === 'ijin' ? '#eff6ff' : '#fef2f2';
     const ket   = st === 'ijin' ? (keteranganTemp[j.id] || '—') : '';
-    return `<tr style="background:${bg}">
-      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${no}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb">${j.nama}${hitungUsia(j.tgl_lahir) !== null ? ' <span style="color:#888;font-size:11px">('+hitungUsia(j.tgl_lahir)+'th)</span>' : ''}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#555">${j.hp||'—'}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;color:${color}">${label}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#1e40af;font-size:12px">${ket}</td>
-    </tr>`;
+    return `<tr style="background:${bg}"><td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${no}</td><td style="padding:7px 10px;border-bottom:1px solid #e5e7eb">${j.nama}${hitungUsia(j.tgl_lahir)!==null?' <span style="color:#888;font-size:11px">('+hitungUsia(j.tgl_lahir)+'th)</span>':''}</td><td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#555">${j.hp||'—'}</td><td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;color:${color}">${label}</td><td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;color:#1e40af;font-size:12px">${ket}</td></tr>`;
   }
 
   const sortByAge = arr => [...arr].sort((a, b) => {
@@ -942,127 +1349,33 @@ function downloadPDF() {
 
   let rows = '';
   if (activeSesi.jenis === 'umum') {
-    if (laki.length) {
-      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#dcfce7;font-weight:700;color:#166534;font-size:12px">👳 Laki-laki (${laki.length})</td></tr>`;
-      rows += laki.map((j,i) => buatRowPDF(j, i+1)).join('');
-    }
-    if (perempuan.length) {
-      rows += `<tr><td colspan="5" style="padding:8px 12px;background:#fce7f3;font-weight:700;color:#be185d;font-size:12px">🧕 Perempuan (${perempuan.length})</td></tr>`;
-      rows += perempuan.map((j,i) => buatRowPDF(j, i+1)).join('');
-    }
+    if (laki.length) { rows += `<tr><td colspan="5" style="padding:8px 12px;background:#dcfce7;font-weight:700;color:#166534;font-size:12px">👳 Laki-laki (${laki.length})</td></tr>`; rows += laki.map((j,i)=>buatRowPDF(j,i+1)).join(''); }
+    if (perempuan.length) { rows += `<tr><td colspan="5" style="padding:8px 12px;background:#fce7f3;font-weight:700;color:#be185d;font-size:12px">🧕 Perempuan (${perempuan.length})</td></tr>`; rows += perempuan.map((j,i)=>buatRowPDF(j,i+1)).join(''); }
   } else {
-    rows = sortByAge(_jamaahCache).map((j,i) => buatRowPDF(j, i+1)).join('');
+    rows = sortByAge(_jamaahCache).map((j,i)=>buatRowPDF(j,i+1)).join('');
   }
 
-  const hadirL = hadir.filter(j=>j.jenis_kelamin!=='P').length;
-  const hadirP = hadir.filter(j=>j.jenis_kelamin==='P').length;
-  const ijinL  = ijin.filter(j=>j.jenis_kelamin!=='P').length;
-  const ijinP  = ijin.filter(j=>j.jenis_kelamin==='P').length;
-  const tanpaL = tanpa.filter(j=>j.jenis_kelamin!=='P').length;
-  const tanpaP = tanpa.filter(j=>j.jenis_kelamin==='P').length;
+  const hadirL=hadir.filter(j=>j.jenis_kelamin!=='P').length, hadirP=hadir.filter(j=>j.jenis_kelamin==='P').length;
+  const ijinL=ijin.filter(j=>j.jenis_kelamin!=='P').length, ijinP=ijin.filter(j=>j.jenis_kelamin==='P').length;
+  const tanpaL=tanpa.filter(j=>j.jenis_kelamin!=='P').length, tanpaP=tanpa.filter(j=>j.jenis_kelamin==='P').length;
 
-  const rinci = (l,p) => l||p ? `<div style="font-size:10px;color:#888;margin-top:2px">PA:${l} PI:${p}</div>` : '';
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Absensi ${activeSesi.nama} - ${majelis}</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',sans-serif;padding:28px 32px;color:#1a1a1a;font-size:13px}
-    .kop{background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:14px}
-    .kop-icon{font-size:32px}
-    .kop-nama{font-size:20px;font-weight:700;letter-spacing:.3px}
-    .kop-sub{font-size:12px;opacity:.85;margin-top:3px}
-    .kop-meta{margin-left:auto;text-align:right;font-size:11px;opacity:.85;line-height:1.7}
-    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-    .stat-box{border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px}
-    .stat-box.hadir{background:#f0fdf4;border:1.5px solid #86efac}
-    .stat-box.ijin{background:#eff6ff;border:1.5px solid #bfdbfe}
-    .stat-box.tanpa{background:#fef2f2;border:1.5px solid #fecaca}
-    .stat-icon{font-size:22px}
-    .stat-val{font-size:22px;font-weight:700;line-height:1}
-    .stat-lbl{font-size:11px;color:#555;margin-top:2px}
-    .stat-rinci{font-size:10px;color:#888;margin-top:3px}
-    .infaq-row{display:flex;gap:10px;margin-bottom:14px}
-    .infaq-box{flex:1;background:#fefce8;border:1.5px solid #fde68a;border-radius:8px;padding:10px 14px}
-    .infaq-lbl{font-size:11px;color:#92400e;margin-bottom:4px}
-    .infaq-val{font-size:16px;font-weight:700;color:#166534}
-    .tbl-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden}
-    table{width:100%;border-collapse:collapse}
-    th{background:#1a6b45 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:9px 12px;text-align:left;font-size:11px;border-right:1px solid rgba(255,255,255,.2)}
-    th:first-child{text-align:center;width:36px}
-    th:last-child{border-right:none}
-    td{padding:7px 12px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;font-size:12px}
-    td:first-child{text-align:center;color:#aaa;font-size:11px}
-    td:last-child{border-right:none}
-    tr:last-child td{border-bottom:none}
-    .footer{margin-top:16px;display:flex;justify-content:space-between;font-size:10px;color:#aaa}
-    @media print{body{padding:16px}}
-  </style></head><body>
-  <div class="kop">
-    <div class="kop-icon">🕌</div>
-    <div>
-      <div class="kop-nama">🕌 Laporan Absensi ${activeSesi.nama}</div>
-      <div class="kop-sub">${majelis}</div>
-    </div>
-    <div class="kop-meta">
-      <div>📅 ${tgl}</div>
-      <div>⏰ ${activeSesi.waktu||'—'} &nbsp;|&nbsp; 👥 ${_jamaahCache.length} jamaah</div>
-    </div>
-  </div>
-
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laporan Absensi ${activeSesi.nama}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',sans-serif;padding:28px 32px;color:#1a1a1a;font-size:13px}.kop{background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:14px}.kop-icon{font-size:32px}.kop-nama{font-size:20px;font-weight:700}.kop-sub{font-size:12px;opacity:.85;margin-top:3px}.kop-meta{margin-left:auto;text-align:right;font-size:11px;opacity:.85;line-height:1.7}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.stat-box{border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px}.stat-box.hadir{background:#f0fdf4;border:1.5px solid #86efac}.stat-box.ijin{background:#eff6ff;border:1.5px solid #bfdbfe}.stat-box.tanpa{background:#fef2f2;border:1.5px solid #fecaca}.stat-icon{font-size:22px}.stat-val{font-size:22px;font-weight:700;line-height:1}.stat-lbl{font-size:11px;color:#555;margin-top:2px}.stat-rinci{font-size:10px;color:#888;margin-top:3px}.infaq-row{display:flex;gap:10px;margin-bottom:14px}.infaq-box{flex:1;background:#fefce8;border:1.5px solid #fde68a;border-radius:8px;padding:10px 14px}.infaq-lbl{font-size:11px;color:#92400e;margin-bottom:4px}.infaq-val{font-size:16px;font-weight:700;color:#166534}.tbl-wrap{border:2px solid #1a6b45;border-radius:10px;overflow:hidden}table{width:100%;border-collapse:collapse}th{background:#1a6b45 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:9px 12px;text-align:left;font-size:11px;border-right:1px solid rgba(255,255,255,.2)}th:first-child{text-align:center;width:36px}th:last-child{border-right:none}td{padding:7px 12px;border-bottom:1px solid #e5e7eb;border-right:1px solid #e5e7eb;font-size:12px}td:first-child{text-align:center;color:#aaa;font-size:11px}td:last-child{border-right:none}tr:last-child td{border-bottom:none}.footer{margin-top:16px;display:flex;justify-content:space-between;font-size:10px;color:#aaa}@media print{body{padding:16px}}</style>
+  </head><body>
+  <div class="kop"><div class="kop-icon">🕌</div><div><div class="kop-nama">🕌 Laporan Absensi ${activeSesi.nama}</div><div class="kop-sub">${majelis}</div></div><div class="kop-meta"><div>📅 ${tgl}</div><div>⏰ ${activeSesi.waktu||'—'} | 👥 ${_jamaahCache.length} jamaah</div></div></div>
   <div class="stats-grid">
-    <div class="stat-box hadir">
-      <div class="stat-icon">✅</div>
-      <div>
-        <div class="stat-val" style="color:#166534">${hadir.length}</div>
-        <div class="stat-lbl">Hadir</div>
-        <div class="stat-rinci">L:${hadirL} / P:${hadirP}</div>
-      </div>
-    </div>
-    <div class="stat-box ijin">
-      <div class="stat-icon">📋</div>
-      <div>
-        <div class="stat-val" style="color:#1e40af">${ijin.length}</div>
-        <div class="stat-lbl">Ijin</div>
-        <div class="stat-rinci">L:${ijinL} / P:${ijinP}</div>
-      </div>
-    </div>
-    <div class="stat-box tanpa">
-      <div class="stat-icon">❓</div>
-      <div>
-        <div class="stat-val" style="color:#991b1b">${tanpa.length}</div>
-        <div class="stat-lbl">Tanpa Keterangan</div>
-        <div class="stat-rinci">L:${tanpaL} / P:${tanpaP}</div>
-      </div>
-    </div>
+    <div class="stat-box hadir"><div class="stat-icon">✅</div><div><div class="stat-val" style="color:#166534">${hadir.length}</div><div class="stat-lbl">Hadir</div><div class="stat-rinci">L:${hadirL}/P:${hadirP}</div></div></div>
+    <div class="stat-box ijin"><div class="stat-icon">📋</div><div><div class="stat-val" style="color:#1e40af">${ijin.length}</div><div class="stat-lbl">Ijin</div><div class="stat-rinci">L:${ijinL}/P:${ijinP}</div></div></div>
+    <div class="stat-box tanpa"><div class="stat-icon">❓</div><div><div class="stat-val" style="color:#991b1b">${tanpa.length}</div><div class="stat-lbl">Tanpa Keterangan</div><div class="stat-rinci">L:${tanpaL}/P:${tanpaP}</div></div></div>
   </div>
-
-  ${true ? `
   <div class="infaq-row">
-    <div class="infaq-box">
-      <div class="infaq-lbl">💰 Infaq 1</div>
-      <div class="infaq-val">Rp ${(activeSesi.infaq1||0).toLocaleString('id-ID')}</div>
-    </div>
-    <div class="infaq-box">
-      <div class="infaq-lbl">💰 Infaq 2</div>
-      <div class="infaq-val">Rp ${(activeSesi.infaq2||0).toLocaleString('id-ID')}</div>
-    </div>
-    <div class="infaq-box" style="background:#f0fdf4;border-color:#86efac">
-      <div class="infaq-lbl" style="color:#166534">💰 Total Infaq</div>
-      <div class="infaq-val">Rp ${((activeSesi.infaq1||0)+(activeSesi.infaq2||0)).toLocaleString('id-ID')}</div>
-    </div>
-  </div>` : ''}
-
-  <div class="tbl-wrap">
-  <table>
-    <thead><tr><th>No</th><th>Nama</th><th>No. HP</th><th>Status</th><th>Keterangan Ijin</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
+    <div class="infaq-box"><div class="infaq-lbl">💰 Infaq 1</div><div class="infaq-val">Rp ${(activeSesi.infaq1||0).toLocaleString('id-ID')}</div></div>
+    <div class="infaq-box"><div class="infaq-lbl">💰 Infaq 2</div><div class="infaq-val">Rp ${(activeSesi.infaq2||0).toLocaleString('id-ID')}</div></div>
+    <div class="infaq-box" style="background:#f0fdf4;border-color:#86efac"><div class="infaq-lbl" style="color:#166534">💰 Total Infaq</div><div class="infaq-val">Rp ${((activeSesi.infaq1||0)+(activeSesi.infaq2||0)).toLocaleString('id-ID')}</div></div>
   </div>
-  <div class="footer">
-    <span>Dicetak: ${new Date().toLocaleString('id-ID')}</span>
-  </div>
-  <script>window.onload=()=>{window.print();}<\/script>
-  </body></html>`;
+  <div class="tbl-wrap"><table><thead><tr><th>No</th><th>Nama</th><th>No. HP</th><th>Status</th><th>Keterangan Ijin</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="footer"><span>Dicetak: ${new Date().toLocaleString('id-ID')}</span></div>
+  <script>window.onload=()=>{window.print();}<\/script></body></html>`;
 
   const w = window.open('', '_blank');
   w.document.write(html);
@@ -1076,7 +1389,6 @@ function load() {
   document.getElementById('set-nama').value = CFG.nama || '';
   document.getElementById('s-tgl').value = new Date().toISOString().split('T')[0];
   if (CFG.nama) document.getElementById('header-sub').textContent = CFG.nama;
-  // Pastikan CFG tersimpan ke localStorage jika belum ada (pakai default bawaan)
   if (!localStorage.getItem('absensiCfg')) {
     localStorage.setItem('absensiCfg', JSON.stringify(CFG));
   }
@@ -1126,4 +1438,3 @@ function tutupBanner() {
 </script>
 </body>
 </html>
-
