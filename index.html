@@ -165,8 +165,19 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
     </div>
       <div id="form-sesi" class="hidden">
       <div class="form-group">
-        <label style="color:rgba(255,255,255,.8)">Nama Acara</label>
-        <input type="text" id="s-nama" placeholder="Tulis Nama kegiatan / Pengajian">
+        <label style="color:rgba(255,255,255,.8)">Jenis Pengajian</label>
+        <select id="s-jenis" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.95);color:#1a6b45;font-size:13px;font-weight:600;outline:none" onchange="updateNamaSesi()">
+          <option value="" style="color:#666">-- Pilih Jenis --</option>
+          <option value="Sambung Daerah" style="color:#333">Sambung Daerah</option>
+          <option value="Sambung Desa" style="color:#333">Sambung Desa</option>
+          <option value="Sambung Kelompok" style="color:#333">Sambung Kelompok</option>
+          <option value="Penyampaian Teks" style="color:#333">Penyampaian Teks</option>
+          <option value="Pengajian Ibu-Ibu (Keputrian)" style="color:#333">Pengajian Ibu-Ibu (Keputrian)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label style="color:rgba(255,255,255,.8)">Nama Sesi (Otomatis/Manual)</label>
+        <input type="text" id="s-nama" placeholder="Akan terisi otomatis setelah pilih jenis" style="background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.3)">
       </div>
       <div class="row">
         <div class="form-group">
@@ -176,14 +187,6 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
         <div class="form-group">
           <label style="color:rgba(255,255,255,.8)">Waktu</label>
           <input type="time" id="s-waktu" value="19:30">
-        </div>
-      </div>
-      <div class="form-group">
-        <label style="color:rgba(255,255,255,.8)">Jenis Pengajian</label>
-        <div style="display:flex;gap:6px">
-          <button id="jp-umum" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('umum')">🕌 Umum</button>
-          <button id="jp-keputrian" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('keputrian')">🧕 Keputrian</button>
-          <button id="jp-ms" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJenis('ms')">⭐ MS</button>
         </div>
       </div>
       <button class="btn btn-primary" onclick="buatSesi()" style="background:#fff;color:#1a6b45;margin-top:4px">+ Buat Sesi</button>
@@ -332,6 +335,25 @@ function pilihJenis(j) {
   });
 }
 
+function updateNamaSesi() {
+  const jenis = document.getElementById('s-jenis').value;
+  if (!jenis) {
+    document.getElementById('s-nama').value = '';
+    return;
+  }
+  
+  // Dapatkan bulan saat ini dalam bahasa Indonesia
+  const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const now = new Date();
+  const bulan = bulanIndonesia[now.getMonth()];
+  const tahun = now.getFullYear();
+  
+  // Format nama sesi otomatis
+  const namaSesi = `${jenis} - ${bulan} ${tahun}`;
+  document.getElementById('s-nama').value = namaSesi;
+}
+
 function hitungUsia(tgl) {
   if (!tgl) return null;
   const today = new Date();
@@ -478,11 +500,19 @@ async function buatSesi() {
   const nama = document.getElementById('s-nama').value.trim();
   const tanggal = document.getElementById('s-tgl').value;
   const waktu = document.getElementById('s-waktu').value;
+  const jenis = document.getElementById('s-jenis').value;
+  
   if (!nama || !tanggal) return toast('⚠️ Nama & tanggal wajib diisi');
+  if (!jenis) return toast('⚠️ Pilih jenis pengajian dulu');
+  
   try {
-    const [sesi] = await sbPost('sesi', { nama, tanggal, waktu, selesai: false, jenis: selectedJenis });
+    // Mapping jenis pengajian ke kategori filter
+    let jenisFilter = 'umum';
+    if (jenis === 'Pengajian Ibu-Ibu (Keputrian)') jenisFilter = 'keputrian';
+    
+    const [sesi] = await sbPost('sesi', { nama, tanggal, waktu, selesai: false, jenis: jenisFilter });
     document.getElementById('s-nama').value = '';
-    selectedJenis = 'umum'; pilihJenis('umum');
+    document.getElementById('s-jenis').value = '';
     toast('✅ Sesi dibuat');
     await bukaAbsensi(sesi);
   } catch(e) { toast('❌ Gagal: ' + e.message); }
@@ -501,7 +531,12 @@ async function renderSesiList() {
     el.innerHTML = data.map(s => {
       const tgl = new Date(s.tanggal).toLocaleDateString('id-ID', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
       const badge = s.selesai ? '<span class="sesi-badge badge-done">Selesai</span>' : '<span class="sesi-badge badge-open">Aktif</span>';
-      const jLabel = s.jenis==='keputrian' ? '🧕 Keputrian' : s.jenis==='ms' ? '⭐ MS' : '🕌 Umum';
+      
+      // Tampilkan label jenis yang lebih deskriptif
+      let jLabel = '🕌 Umum';
+      if (s.jenis === 'keputrian') jLabel = '🧕 Keputrian';
+      else if (s.jenis === 'ms') jLabel = '⭐ MS';
+      
       return `
         <div class="sesi-card" onclick="bukaAbsensi(${JSON.stringify(s).replace(/"/g,'&quot;')})">
           <div class="avatar" style="background:${s.selesai?'var(--abu)':'var(--hijau)'}">📋</div>
@@ -571,6 +606,7 @@ async function bukaAbsensi(sesi) {
     let filtered = jamaahList;
     if (sesi.jenis === 'keputrian') filtered = jamaahList.filter(j => j.jenis_kelamin === 'P');
     else if (sesi.jenis === 'ms') filtered = jamaahList.filter(j => j.is_ms);
+    else if (sesi.jenis === 'umum') filtered = jamaahList; // Semua jamaah
 
     // Init temp dari data existing, default tanpa
     filtered.forEach(j => {
@@ -640,7 +676,11 @@ function renderAbsensi(q='', jamaahList=null) {
   if (activeSesi?.jenis === 'umum') {
     if (laki.length) html += `<div style="font-size:12px;font-weight:700;color:var(--hijau);margin:8px 0 4px">👳 Laki-laki (${laki.length})</div>` + laki.map(buatBaris).join('');
     if (perempuan.length) html += `<div style="font-size:12px;font-weight:700;color:#be185d;margin:12px 0 4px">🧕 Perempuan (${perempuan.length})</div>` + perempuan.map(buatBaris).join('');
+  } else if (activeSesi?.jenis === 'keputrian') {
+    // Keputrian: tampilkan semua (sudah difilter perempuan di bukaAbsensi)
+    html = data.map(buatBaris).join('');
   } else {
+    // Jenis lain (Sambung Daerah, dll): tampilkan semua jamaah
     html = data.map(buatBaris).join('');
   }
   el.innerHTML = html || '<div class="empty"><div class="empty-icon">👥</div>Tidak ada jamaah</div>';
@@ -791,7 +831,7 @@ function downloadRekap() {
   if (!activeSesi) return toast('⚠️ Tidak ada sesi aktif');
   const tgl = new Date(activeSesi.tanggal).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   const majelis = CFG.nama || 'Majelis Ta\'lim';
-  const jenis = activeSesi.jenis === 'keputrian' ? 'Keputrian' : activeSesi.jenis === 'ms' ? 'MS' : 'Umum';
+  const jenisLabel = activeSesi.jenis === 'keputrian' ? 'Keputrian' : activeSesi.jenis === 'ms' ? 'MS' : 'Umum';
   const total = _jamaahCache.length;
   const hadirList = _jamaahCache.filter(j => absensiTemp[j.id] === 'hadir');
   const ijinList  = _jamaahCache.filter(j => absensiTemp[j.id] === 'ijin');
