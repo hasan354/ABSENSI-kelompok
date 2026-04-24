@@ -711,6 +711,12 @@ function buatItemJamaah(j, isKK) {
   const borderLeft = isKK ? 'border-left:3px solid var(--hijau);' : 'border-left:3px solid var(--border);';
   return `
   <div class="list-item" style="${borderLeft}margin-bottom:5px">
+    <div style="display:flex;flex-direction:column;gap:2px;margin-right:2px">
+      <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:13px;line-height:1" title="Naik"
+        onclick="geserUrutan('${j.id}','${(j.kk_nama||'').replace(/'/g,"\\'")}',${isKK},'naik')">▲</button>
+      <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:13px;line-height:1" title="Turun"
+        onclick="geserUrutan('${j.id}','${(j.kk_nama||'').replace(/'/g,"\\'")}',${isKK},'turun')">▼</button>
+    </div>
     <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}${isKK?';width:32px;height:32px;font-size:12px':''}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
     <div class="info">
       <div class="nama">${j.nama}${kkBadge}${msBadge} <span style="font-size:11px;color:#1e40af">${j.jenis_kelamin==='P'?'Perempuan':'Laki-laki'}${usiaStr}</span></div>
@@ -719,6 +725,44 @@ function buatItemJamaah(j, isKK) {
     <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}','${j.jenis_kelamin||'L'}','${j.tgl_lahir||''}',${!!j.is_ms},${!!j.is_kk},'${(j.kk_nama||'').replace(/'/g,"\\'")}')">Edit</button>
     <button class="btn btn-danger btn-sm" onclick="hapusJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}',${!!j.is_kk})">Hapus</button>
   </div>`;
+}
+
+// ── GESER URUTAN ─────────────────────────────────────────
+async function geserUrutan(id, kkNama, isKK, arah) {
+  if (!checkCfg()) return;
+  try {
+    // Ambil semua jamaah dalam konteks yang sama
+    // KK: geser antar KK saja | Anggota: geser dalam KK yang sama saja
+    let url;
+    if (isKK) {
+      url = 'jamaah?is_kk=eq.true&order=urutan.asc,nama.asc';
+    } else {
+      const kkFilter = kkNama
+        ? 'jamaah?is_kk=eq.false&kk_nama=eq.' + encodeURIComponent(kkNama) + '&order=urutan.asc,nama.asc'
+        : 'jamaah?is_kk=eq.false&kk_nama=eq.&order=urutan.asc,nama.asc';
+      url = kkFilter;
+    }
+    const list = await sbGet(url);
+    const idx = list.findIndex(j => j.id === id);
+    if (idx === -1) return;
+
+    const swapIdx = arah === 'naik' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= list.length) return; // sudah di ujung
+
+    const a = list[idx];
+    const b = list[swapIdx];
+
+    // Tukar nilai urutan
+    const urutanA = a.urutan ?? idx * 10;
+    const urutanB = b.urutan ?? swapIdx * 10;
+
+    await Promise.all([
+      sbPatch('jamaah?id=eq.' + a.id, { urutan: urutanB }),
+      sbPatch('jamaah?id=eq.' + b.id, { urutan: urutanA })
+    ]);
+
+    renderJamaah();
+  } catch(e) { toast('❌ Gagal geser: ' + e.message); }
 }
 
 async function hapusJamaah(id, nama, isKK) {
