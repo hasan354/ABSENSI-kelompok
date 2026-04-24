@@ -1009,14 +1009,77 @@ async function selesaiAbsensi() {
 }
 
 function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false, is_kk=false, kk_nama='') {
+  // Buka modal edit async agar bisa load daftar KK dari DB
+  _bukaModalEdit(id, nama, hp, jk, tgl, is_ms, is_kk, kk_nama);
+}
+
+async function _bukaModalEdit(id, nama, hp, jk, tgl, is_ms, is_kk, kk_nama) {
+  if (!checkCfg()) return;
+
+  // Ambil semua KK untuk dropdown
+  let kkList = [];
+  try {
+    kkList = await sbGet('jamaah?is_kk=eq.true&order=urutan.asc,nama.asc');
+  } catch(e) {}
+
+  // Ambil anggota jika ini KK
+  let anggotaList = [];
+  if (is_kk) {
+    try {
+      anggotaList = await sbGet('jamaah?kk_nama=eq.' + encodeURIComponent(nama) + '&order=urutan.asc,nama.asc');
+    } catch(e) {}
+  }
+
   const modal = document.createElement('div');
   modal.id = 'modal-edit';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
-  const kkLabel = is_kk ? '<div style="background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;margin-bottom:12px">🏠 Kepala Keluarga (KK)</div>' : (kk_nama ? `<div style="background:#f0f9ff;color:#0369a1;font-size:12px;padding:6px 10px;border-radius:6px;margin-bottom:12px">Anggota KK: <strong>${kk_nama}</strong></div>` : '');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+
+  // Dropdown KK (untuk anggota)
+  const kkOptions = kkList
+    .filter(k => k.id !== id) // jangan tampilkan diri sendiri
+    .map(k => `<option value="${k.nama.replace(/"/g,'&quot;')}" ${kk_nama===k.nama?'selected':''}>${k.nama}</option>`)
+    .join('');
+
+  // Daftar anggota (jika ini KK)
+  const anggotaHTML = is_kk && anggotaList.length ? `
+    <div style="margin-top:14px;border-top:1.5px solid var(--border);padding-top:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--hijau);margin-bottom:8px">👨‍👩‍👧 Anggota Keluarga (${anggotaList.length})</div>
+      ${anggotaList.map(a => `
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:7px;margin-bottom:5px">
+          <div style="flex:1;font-size:13px;font-weight:600">${a.nama}</div>
+          <span style="font-size:11px;color:var(--abu)">${a.jenis_kelamin==='P'?'🧕':'👳'}</span>
+          <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px"
+            onclick="pindahAnggota('${a.id}','${a.nama.replace(/'/g,"\\'")}')">Pindah KK</button>
+        </div>`).join('')}
+    </div>` : (is_kk ? `
+    <div style="margin-top:14px;border-top:1.5px solid var(--border);padding-top:12px">
+      <div style="font-size:12px;color:var(--abu)">Belum ada anggota di KK ini</div>
+    </div>` : '');
+
   modal.innerHTML = `
-    <div style="background:#fff;border-radius:12px;padding:20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-      <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:10px">✏️ Edit Jamaah</div>
-      ${kkLabel}
+    <div style="background:#fff;border-radius:12px;padding:20px;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">
+      <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:12px">✏️ Edit Jamaah</div>
+
+      <!-- Status KK -->
+      <div class="form-group">
+        <label>Status dalam Keluarga</label>
+        <div style="display:flex;gap:8px">
+          <button id="edit-kk-y" class="btn btn-sm ${is_kk?'btn-primary':'btn-ghost'}" style="flex:1;padding:9px"
+            onclick="toggleEditKK(true)">🏠 Kepala Keluarga</button>
+          <button id="edit-kk-n" class="btn btn-sm ${!is_kk?'btn-primary':'btn-ghost'}" style="flex:1;padding:9px"
+            onclick="toggleEditKK(false)">👤 Anggota</button>
+        </div>
+      </div>
+
+      <!-- Pilih KK (hanya tampil jika bukan KK) -->
+      <div class="form-group" id="edit-kk-group" style="display:${is_kk?'none':'block'}">
+        <label>Masuk ke KK</label>
+        <select id="edit-kk-select" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg)">
+          <option value="">— Tanpa KK —</option>
+          ${kkOptions}
+        </select>
+      </div>
+
       <div class="form-group"><label>Nama Lengkap</label><input id="edit-nama" type="text" value="${nama}"></div>
       <div class="form-group"><label>No. HP</label><input id="edit-hp" type="text" value="${hp}"></div>
       <div class="form-group"><label>Tanggal Lahir</label><input id="edit-tgl" type="date" value="${tgl}"></div>
@@ -1034,26 +1097,86 @@ function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false, is_kk=false, kk_n
           <option value="true" ${is_ms?'selected':''}>⭐ MS</option>
         </select>
       </div>
-      <div style="display:flex;gap:8px;margin-top:4px">
+
+      ${anggotaHTML}
+
+      <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn btn-ghost" onclick="document.getElementById('modal-edit').remove()">Batal</button>
-        <button class="btn btn-primary" onclick="simpanEditJamaah('${id}','${nama.replace(/'/g,"\\'")}',${is_kk})">Simpan</button>
+        <button class="btn btn-primary" style="flex:1" onclick="simpanEditJamaah('${id}','${nama.replace(/'/g,"\\'")}',${is_kk})">💾 Simpan</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
 }
 
-async function simpanEditJamaah(id, namaLama, is_kk) {
-  const nama    = document.getElementById('edit-nama').value.trim();
-  const hp      = document.getElementById('edit-hp').value.trim();
-  const jk      = document.getElementById('edit-jk').value;
+function toggleEditKK(jadKK) {
+  document.getElementById('edit-kk-y').className = 'btn btn-sm ' + (jadKK ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('edit-kk-n').className = 'btn btn-sm ' + (!jadKK ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('edit-kk-y').style.cssText = 'flex:1;padding:9px';
+  document.getElementById('edit-kk-n').style.cssText = 'flex:1;padding:9px';
+  document.getElementById('edit-kk-group').style.display = jadKK ? 'none' : 'block';
+}
+
+// Pindah anggota ke KK lain
+async function pindahAnggota(anggotaId, anggotaNama) {
+  if (!checkCfg()) return;
+  // Ambil daftar KK
+  let kkList = [];
+  try { kkList = await sbGet('jamaah?is_kk=eq.true&order=urutan.asc,nama.asc'); } catch(e) {}
+  if (!kkList.length) return toast('⚠️ Belum ada KK lain');
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:12px;padding:20px;width:100%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.25)';
+  box.innerHTML = `
+    <div style="font-size:14px;font-weight:700;color:var(--hijau);margin-bottom:12px">Pindah KK: <em>${anggotaNama}</em></div>
+    <div class="form-group">
+      <label>Pilih KK Tujuan</label>
+      <select id="pindah-kk-select" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg)">
+        <option value="">— Tanpa KK —</option>
+        ${kkList.map(k=>`<option value="${k.nama.replace(/"/g,'&quot;')}">${k.nama}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-ghost" onclick="this.closest('div[style]').remove()">Batal</button>
+      <button class="btn btn-primary" style="flex:1" onclick="konfirmasiPindahAnggota('${anggotaId}')">Pindah</button>
+    </div>`;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+async function konfirmasiPindahAnggota(anggotaId) {
+  const kkBaru = document.getElementById('pindah-kk-select').value;
+  try {
+    await sbPatch('jamaah?id=eq.' + anggotaId, { kk_nama: kkBaru });
+    // Tutup semua overlay/modal
+    document.querySelectorAll('[style*="z-index:300"]').forEach(el => el.remove());
+    document.getElementById('modal-edit')?.remove();
+    toast('✅ Anggota dipindah');
+    renderJamaah();
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
+}
+
+async function simpanEditJamaah(id, namaLama, isKKLama) {
+  const nama     = document.getElementById('edit-nama').value.trim();
+  const hp       = document.getElementById('edit-hp').value.trim();
+  const jk       = document.getElementById('edit-jk').value;
   const tgl_lahir = document.getElementById('edit-tgl').value || null;
-  const is_ms   = document.getElementById('edit-ms').value === 'true';
+  const is_ms    = document.getElementById('edit-ms').value === 'true';
+  // Baca status KK dari tombol toggle
+  const is_kk    = document.getElementById('edit-kk-y').classList.contains('btn-primary');
+  const kk_nama  = is_kk ? '' : (document.getElementById('edit-kk-select')?.value || '');
+
   if (!nama) return toast('⚠️ Nama wajib diisi');
   try {
-    await sbPatch('jamaah?id=eq.' + id, { nama, hp, jenis_kelamin: jk, tgl_lahir, is_ms });
+    await sbPatch('jamaah?id=eq.' + id, { nama, hp, jenis_kelamin: jk, tgl_lahir, is_ms, is_kk, kk_nama });
     // Jika nama KK berubah, update kk_nama di semua anggotanya
     if (is_kk && nama !== namaLama) {
       await sbPatch('jamaah?kk_nama=eq.' + encodeURIComponent(namaLama), { kk_nama: nama });
+    }
+    // Jika sebelumnya KK tapi sekarang jadi anggota, lepas semua anggotanya (kk_nama jadi kosong)
+    if (isKKLama && !is_kk) {
+      await sbPatch('jamaah?kk_nama=eq.' + encodeURIComponent(namaLama), { kk_nama: '' });
     }
     document.getElementById('modal-edit').remove();
     toast('✅ Data diperbarui');
