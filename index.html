@@ -240,6 +240,7 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
           <option value="" style="color:#666">-- Pilih Jenis --</option>
           <option value="Sambung Daerah" style="color:#333">Sambung Daerah</option>
           <option value="Sambung Desa" style="color:#333">Sambung Desa</option>
+          <option value="Sambung MTMS Desa" style="color:#333">Sambung MTMS Desa</option>
           <option value="Sambung Kelompok malam Rabu" style="color:#333">Sambung Kelompok malam Rabu</option>
           <option value="Sambung Kelompok malam Sabtu" style="color:#333">Sambung Kelompok malam Sabtu</option>
           <option value="Penyampaian Teks" style="color:#333">Penyampaian Teks</option>
@@ -1322,6 +1323,7 @@ function showFilterSesiModal() {
           <button class="btn-filter" onclick="filterCepat('Sambung Kelompok')">Sambung Kelompok</button>
           <button class="btn-filter" onclick="filterCepat('Sambung Daerah')">Sambung Daerah</button>
           <button class="btn-filter" onclick="filterCepat('Sambung Desa')">Sambung Desa</button>
+          <button class="btn-filter" onclick="filterCepat('Sambung MTMS Desa')">Sambung MTMS Desa</button>
           <button class="btn-filter" onclick="filterCepat('Penyampaian Teks')">Penyampaian Teks</button>
           <button class="btn-filter" onclick="filterCepat('Keputrian')">Keputrian</button>
         </div>
@@ -1490,7 +1492,7 @@ function generatePDFSemuaJamaah(jamaahList, sesiList, absensiList, bulanIndonesi
     <div class="kop-icon">🕌</div>
     <div>
       <div class="kop-nama">Rekap Absensi — ${namaUnik}</div>
-      <div class="kop-sub">${CFG.nama || "Majelis Ta'lim"}</div>
+      <div class="kop-sub">${CFG.nama || ''}</div>
     </div>
     <div class="kop-meta">
       <div style="font-size:14px;font-weight:700">${bulanIndonesia[bulanIni]} ${tahunIni}</div>
@@ -1598,7 +1600,7 @@ async function downloadRekapJamaahPDF() {
 function downloadRekap() {
   if (!activeSesi) return toast('⚠️ Tidak ada sesi aktif');
   const tgl = new Date(activeSesi.tanggal).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const majelis = CFG.nama || 'Majelis Ta\'lim';
+  const majelis = CFG.nama || '';
   const total = _jamaahCache.length;
   const hadirList = _jamaahCache.filter(j => absensiTemp[j.id] === 'hadir');
   const ijinList  = _jamaahCache.filter(j => absensiTemp[j.id] === 'ijin');
@@ -1626,7 +1628,7 @@ function downloadRekap() {
 function downloadPDF() {
   if (!activeSesi || !_jamaahCache.length) return toast('⚠️ Tidak ada data absensi');
   const tgl = new Date(activeSesi.tanggal).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const majelis = CFG.nama || 'Majelis Ta\'lim';
+  const majelis = CFG.nama || '';
   const hadir = _jamaahCache.filter(j => absensiTemp[j.id] === 'hadir');
   const ijin  = _jamaahCache.filter(j => absensiTemp[j.id] === 'ijin');
   const tanpa = _jamaahCache.filter(j => absensiTemp[j.id] === 'tanpa');
