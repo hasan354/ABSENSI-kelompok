@@ -120,47 +120,99 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 <!-- TAB JAMAAH -->
 <div id="tab-jamaah" class="panel active">
   <div class="card" style="background:linear-gradient(135deg,#1a6b45,#2d9461);color:#fff">
-    <div class="card-title" onclick="toggleForm()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#fff">
-      Tambah Jamaah Baru <span id="form-toggle-icon">＋</span>
-    </div>
-    <div id="form-jamaah" class="hidden">
-    <div class="row">
-      <div class="form-group">
-        <label style="color:rgba(255,255,255,.8)">Nama Lengkap</label>
-        <input type="text" id="i-nama" placeholder="Tulis Nama Jamaah">
-      </div>
-      <div class="form-group">
-        <label style="color:rgba(255,255,255,.8)">No. HP</label>
-        <input type="text" id="i-hp" placeholder="08xx xxxx xxxx">
-      </div>
-    </div>
-    <div class="row">
-      <div class="form-group">
-        <label style="color:rgba(255,255,255,.8)">Tanggal Lahir</label>
-        <input type="date" id="i-tgl">
-      </div>
-      <div class="form-group">
-        <label style="color:rgba(255,255,255,.8)">Jenis Kelamin</label>
-        <div style="display:flex;gap:8px;margin-top:2px">
-          <button id="jk-l" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihJK('L')">👳 L</button>
-          <button id="jk-p" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihJK('P')">🧕 P</button>
-        </div>
-      </div>
-    </div>
-    <div class="form-group">
-      <label style="color:rgba(255,255,255,.8)">Mubaliq Setempat (MS)</label>
-      <div style="display:flex;gap:8px">
-        <button id="ms-n" class="btn btn-primary btn-sm" style="flex:1;padding:9px" onclick="pilihMS(false)">Bukan MS</button>
-        <button id="ms-y" class="btn btn-ghost btn-sm" style="flex:1;padding:9px" onclick="pilihMS(true)">⭐ MS</button>
-      </div>
-    </div>
-    <button class="btn btn-primary" onclick="addJamaah()" style="background:#fff;color:#1a6b45;margin-top:4px">+ Tambah Jamaah</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="showModalTambahKK()" style="background:#fff;color:#1a6b45;font-weight:700;flex:1">🏠 + Tambah KK</button>
+      <button class="btn btn-primary btn-sm" onclick="showModalTambahAnggota()" style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.5);color:#fff;font-weight:700;flex:1">👤 + Tambah Anggota</button>
     </div>
   </div>
   <div class="card">
     <div class="card-title">Daftar Jamaah <span id="jml-jamaah" style="float:right;color:var(--abu);font-weight:600">0</span></div>
     <div class="search"><input type="text" placeholder="Cari nama..." oninput="renderJamaah(this.value)"></div>
     <div id="list-jamaah"><div class="loader">Memuat data...</div></div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH KK -->
+<div id="modal-tambah-kk" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:14px">🏠 Tambah Kepala Keluarga (KK)</div>
+    <div class="form-group">
+      <label>Nama Lengkap KK</label>
+      <input type="text" id="kk-nama" placeholder="Nama Kepala Keluarga">
+    </div>
+    <div class="form-group">
+      <label>No. HP</label>
+      <input type="text" id="kk-hp" placeholder="08xx xxxx xxxx">
+    </div>
+    <div class="row">
+      <div class="form-group">
+        <label>Tanggal Lahir</label>
+        <input type="date" id="kk-tgl">
+      </div>
+      <div class="form-group">
+        <label>Jenis Kelamin</label>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <button id="kk-jk-l" class="btn btn-primary btn-sm" style="flex:1;padding:8px" onclick="pilihJKKK('L')">👳 L</button>
+          <button id="kk-jk-p" class="btn btn-ghost btn-sm" style="flex:1;padding:8px" onclick="pilihJKKK('P')">🧕 P</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Mubaliq Setempat (MS)</label>
+      <div style="display:flex;gap:8px">
+        <button id="kk-ms-n" class="btn btn-primary btn-sm" style="flex:1;padding:8px" onclick="pilihMSKK(false)">Bukan MS</button>
+        <button id="kk-ms-y" class="btn btn-ghost btn-sm" style="flex:1;padding:8px" onclick="pilihMSKK(true)">⭐ MS</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-ghost" onclick="tutupModalKK()">Batal</button>
+      <button class="btn btn-primary" onclick="simpanKK()" style="flex:1">🏠 Simpan KK</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAMBAH ANGGOTA -->
+<div id="modal-tambah-anggota" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:14px">👤 Tambah Anggota</div>
+    <div class="form-group">
+      <label>Pilih KK</label>
+      <select id="ang-kk-select" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg)">
+        <option value="">-- Pilih Kepala Keluarga --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Nama Lengkap Anggota</label>
+      <input type="text" id="ang-nama" placeholder="Nama Anggota">
+    </div>
+    <div class="form-group">
+      <label>No. HP</label>
+      <input type="text" id="ang-hp" placeholder="08xx xxxx xxxx">
+    </div>
+    <div class="row">
+      <div class="form-group">
+        <label>Tanggal Lahir</label>
+        <input type="date" id="ang-tgl">
+      </div>
+      <div class="form-group">
+        <label>Jenis Kelamin</label>
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <button id="ang-jk-l" class="btn btn-primary btn-sm" style="flex:1;padding:8px" onclick="pilihJKAng('L')">👳 L</button>
+          <button id="ang-jk-p" class="btn btn-ghost btn-sm" style="flex:1;padding:8px" onclick="pilihJKAng('P')">🧕 P</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Mubaliq Setempat (MS)</label>
+      <div style="display:flex;gap:8px">
+        <button id="ang-ms-n" class="btn btn-primary btn-sm" style="flex:1;padding:8px" onclick="pilihMSAng(false)">Bukan MS</button>
+        <button id="ang-ms-y" class="btn btn-ghost btn-sm" style="flex:1;padding:8px" onclick="pilihMSAng(true)">⭐ MS</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-ghost" onclick="tutupModalAnggota()">Batal</button>
+      <button class="btn btn-primary" onclick="simpanAnggota()" style="flex:1">👤 Simpan Anggota</button>
+    </div>
   </div>
 </div>
 
@@ -355,9 +407,12 @@ let selectedJK = 'L';
 let selectedMS = false;
 let selectedJenis = 'umum';
 let selectedKategori = 'umum';
+// State untuk modal KK
+let kkJK = 'L', kkMS = false;
+// State untuk modal Anggota
+let angJK = 'L', angMS = false;
 
-function toggleFormSesi() {
-  const f = document.getElementById('form-sesi');
+function toggleFormSesi() {  const f = document.getElementById('form-sesi');
   const icon = document.getElementById('sesi-toggle-icon');
   const hidden = f.classList.toggle('hidden');
   icon.textContent = hidden ? '＋' : '－';
@@ -368,29 +423,6 @@ function toggleFormSesi() {
       document.getElementById('s-tgl').value = today;
     }
   }
-}
-
-function toggleForm() {
-  const f = document.getElementById('form-jamaah');
-  const icon = document.getElementById('form-toggle-icon');
-  const hidden = f.classList.toggle('hidden');
-  icon.textContent = hidden ? '＋' : '－';
-}
-
-function pilihMS(val) {
-  selectedMS = val;
-  document.getElementById('ms-n').className = 'btn btn-sm ' + (!val ? 'btn-primary' : 'btn-ghost');
-  document.getElementById('ms-y').className = 'btn btn-sm ' + (val ? 'btn-primary' : 'btn-ghost');
-  document.getElementById('ms-n').style.cssText = 'flex:1;padding:9px';
-  document.getElementById('ms-y').style.cssText = 'flex:1;padding:9px';
-}
-
-function pilihJK(jk) {
-  selectedJK = jk;
-  document.getElementById('jk-l').className = 'btn btn-sm ' + (jk==='L' ? 'btn-primary' : 'btn-ghost');
-  document.getElementById('jk-p').className = 'btn btn-sm ' + (jk==='P' ? 'btn-primary' : 'btn-ghost');
-  document.getElementById('jk-l').style.cssText = 'flex:1;padding:9px';
-  document.getElementById('jk-p').style.cssText = 'flex:1;padding:9px';
 }
 
 function pilihKategori(cat) {
@@ -498,61 +530,209 @@ function checkCfg() {
   return true;
 }
 
-// ── JAMAAH ───────────────────────────────────────────────
-async function addJamaah() {
+// ── JAMAAH KK/ANGGOTA ────────────────────────────────────
+
+// ── Helper pilih JK & MS untuk modal KK ──
+function pilihJKKK(jk) {
+  kkJK = jk;
+  document.getElementById('kk-jk-l').className = 'btn btn-sm ' + (jk==='L'?'btn-primary':'btn-ghost');
+  document.getElementById('kk-jk-p').className = 'btn btn-sm ' + (jk==='P'?'btn-primary':'btn-ghost');
+  document.getElementById('kk-jk-l').style.cssText = 'flex:1;padding:8px';
+  document.getElementById('kk-jk-p').style.cssText = 'flex:1;padding:8px';
+}
+function pilihMSKK(val) {
+  kkMS = val;
+  document.getElementById('kk-ms-n').className = 'btn btn-sm ' + (!val?'btn-primary':'btn-ghost');
+  document.getElementById('kk-ms-y').className = 'btn btn-sm ' + (val?'btn-primary':'btn-ghost');
+  document.getElementById('kk-ms-n').style.cssText = 'flex:1;padding:8px';
+  document.getElementById('kk-ms-y').style.cssText = 'flex:1;padding:8px';
+}
+// ── Helper pilih JK & MS untuk modal Anggota ──
+function pilihJKAng(jk) {
+  angJK = jk;
+  document.getElementById('ang-jk-l').className = 'btn btn-sm ' + (jk==='L'?'btn-primary':'btn-ghost');
+  document.getElementById('ang-jk-p').className = 'btn btn-sm ' + (jk==='P'?'btn-primary':'btn-ghost');
+  document.getElementById('ang-jk-l').style.cssText = 'flex:1;padding:8px';
+  document.getElementById('ang-jk-p').style.cssText = 'flex:1;padding:8px';
+}
+function pilihMSAng(val) {
+  angMS = val;
+  document.getElementById('ang-ms-n').className = 'btn btn-sm ' + (!val?'btn-primary':'btn-ghost');
+  document.getElementById('ang-ms-y').className = 'btn btn-sm ' + (val?'btn-primary':'btn-ghost');
+  document.getElementById('ang-ms-n').style.cssText = 'flex:1;padding:8px';
+  document.getElementById('ang-ms-y').style.cssText = 'flex:1;padding:8px';
+}
+
+// ── Modal KK ──
+function showModalTambahKK() {
   if (!checkCfg()) return;
-  const nama = document.getElementById('i-nama').value.trim();
-  const hp = document.getElementById('i-hp').value.trim();
-  if (!nama) return toast('⚠️ Nama wajib diisi');
+  kkJK = 'L'; kkMS = false;
+  document.getElementById('kk-nama').value = '';
+  document.getElementById('kk-hp').value = '';
+  document.getElementById('kk-tgl').value = '';
+  pilihJKKK('L'); pilihMSKK(false);
+  document.getElementById('modal-tambah-kk').style.display = 'flex';
+}
+function tutupModalKK() {
+  document.getElementById('modal-tambah-kk').style.display = 'none';
+}
+
+async function simpanKK() {
+  if (!checkCfg()) return;
+  const nama = document.getElementById('kk-nama').value.trim();
+  const hp   = document.getElementById('kk-hp').value.trim();
+  const tgl_lahir = document.getElementById('kk-tgl').value || null;
+  if (!nama) return toast('⚠️ Nama KK wajib diisi');
   try {
-    const tgl_lahir = document.getElementById('i-tgl').value || null;
-    await sbPost('jamaah', { nama, hp, jenis_kelamin: selectedJK, tgl_lahir, is_ms: selectedMS });
-    document.getElementById('i-nama').value = '';
-    document.getElementById('i-hp').value = '';
-    document.getElementById('i-tgl').value = '';
-    selectedJK = 'L'; pilihJK('L');
-    selectedMS = false; pilihMS(false);
-    toast('✅ Jamaah ditambahkan');
+    // Hitung urutan: ambil max urutan yang ada lalu +10
+    const existing = await sbGet('jamaah?order=urutan.desc&limit=1');
+    const urutan = existing.length ? (existing[0].urutan || 0) + 10 : 10;
+    await sbPost('jamaah', {
+      nama, hp, jenis_kelamin: kkJK, tgl_lahir, is_ms: kkMS,
+      is_kk: true, kk_nama: '', urutan
+    });
+    tutupModalKK();
+    toast('✅ KK ditambahkan');
     renderJamaah();
   } catch(e) { toast('❌ Gagal: ' + e.message); }
 }
 
+// ── Modal Anggota ──
+async function showModalTambahAnggota() {
+  if (!checkCfg()) return;
+  angJK = 'L'; angMS = false;
+  document.getElementById('ang-nama').value = '';
+  document.getElementById('ang-hp').value = '';
+  document.getElementById('ang-tgl').value = '';
+  pilihJKAng('L'); pilihMSAng(false);
+  // Isi dropdown KK
+  const sel = document.getElementById('ang-kk-select');
+  sel.innerHTML = '<option value="">-- Pilih Kepala Keluarga --</option>';
+  try {
+    const kkList = await sbGet('jamaah?is_kk=eq.true&order=urutan.asc');
+    kkList.forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k.nama;
+      opt.textContent = k.nama;
+      sel.appendChild(opt);
+    });
+  } catch(e) { toast('⚠️ Gagal muat daftar KK'); }
+  document.getElementById('modal-tambah-anggota').style.display = 'flex';
+}
+function tutupModalAnggota() {
+  document.getElementById('modal-tambah-anggota').style.display = 'none';
+}
+
+async function simpanAnggota() {
+  if (!checkCfg()) return;
+  const kkNama = document.getElementById('ang-kk-select').value;
+  const nama   = document.getElementById('ang-nama').value.trim();
+  const hp     = document.getElementById('ang-hp').value.trim();
+  const tgl_lahir = document.getElementById('ang-tgl').value || null;
+  if (!kkNama) return toast('⚠️ Pilih KK dulu');
+  if (!nama)   return toast('⚠️ Nama anggota wajib diisi');
+  try {
+    // Cari urutan KK yang dipilih, lalu sisipkan setelah anggota terakhir KK itu
+    const kkData = await sbGet('jamaah?is_kk=eq.true&nama=eq.' + encodeURIComponent(kkNama) + '&limit=1');
+    const kkUrutan = kkData.length ? (kkData[0].urutan || 0) : 0;
+    // Ambil semua anggota KK ini untuk cari urutan terakhir
+    const anggotaKK = await sbGet('jamaah?kk_nama=eq.' + encodeURIComponent(kkNama) + '&order=urutan.desc&limit=1');
+    const lastUrutan = anggotaKK.length ? (anggotaKK[0].urutan || kkUrutan) : kkUrutan;
+    const urutan = lastUrutan + 1;
+    await sbPost('jamaah', {
+      nama, hp, jenis_kelamin: angJK, tgl_lahir, is_ms: angMS,
+      is_kk: false, kk_nama: kkNama, urutan
+    });
+    tutupModalAnggota();
+    toast('✅ Anggota ditambahkan');
+    renderJamaah();
+  } catch(e) { toast('❌ Gagal: ' + e.message); }
+}
+
+// ── Render daftar jamaah dikelompokkan per KK ──
 async function renderJamaah(q='') {
   if (!checkCfg()) return;
   const el = document.getElementById('list-jamaah');
   el.innerHTML = '<div class="loader">Memuat...</div>';
   try {
-    let url = 'jamaah?order=nama.asc';
-    if (q) url += '&nama=ilike.*' + encodeURIComponent(q) + '*';
+    let url = 'jamaah?order=urutan.asc,nama.asc';
     const data = await sbGet(url);
-    document.getElementById('jml-jamaah').textContent = data.length + ' orang';
-    if (!data.length) {
+
+    // Filter pencarian
+    const filtered = q
+      ? data.filter(j => j.nama.toLowerCase().includes(q.toLowerCase()))
+      : data;
+
+    document.getElementById('jml-jamaah').textContent = filtered.filter(j=>j.nama).length + ' orang';
+
+    if (!filtered.length) {
       el.innerHTML = '<div class="empty"><div class="empty-icon">🕌</div>Belum ada jamaah</div>';
       return;
     }
-    el.innerHTML = data.map(j => {
-      const usia = hitungUsia(j.tgl_lahir);
-      const usiaStr = usia !== null ? ` · ${usia} thn` : '';
-      const msBadge = j.is_ms ? ' <span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">⭐MS</span>' : '';
-      return `
-      <div class="list-item">
-        <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
-        <div class="info">
-          <div class="nama">${j.nama}${msBadge} <span style="font-size:11px;color:#1e40af">${j.jenis_kelamin==='P'?'Perempuan':'Laki-laki'}${usiaStr}</span></div>
-          <div class="meta">${j.hp || '—'}</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}','${j.jenis_kelamin||'L'}','${j.tgl_lahir||''}',${!!j.is_ms})">Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="hapusJamaah('${j.id}')">Hapus</button>
-      </div>`;
-    }).join('');
+
+    // Kelompokkan: KK + anggotanya
+    // Jika ada pencarian, tampilkan flat saja
+    if (q) {
+      el.innerHTML = filtered.map(j => buatItemJamaah(j, false)).join('');
+      return;
+    }
+
+    // Tanpa pencarian: tampilkan per KK
+    const kkList = data.filter(j => j.is_kk);
+    const anggotaMap = {}; // kk_nama → array anggota
+    data.filter(j => !j.is_kk).forEach(j => {
+      const k = j.kk_nama || '__tanpa_kk__';
+      if (!anggotaMap[k]) anggotaMap[k] = [];
+      anggotaMap[k].push(j);
+    });
+
+    let html = '';
+    kkList.forEach(kk => {
+      html += buatItemJamaah(kk, true);
+      const anggota = anggotaMap[kk.nama] || [];
+      anggota.forEach(a => {
+        html += `<div style="padding-left:16px">${buatItemJamaah(a, false)}</div>`;
+      });
+    });
+    // Jamaah tanpa KK
+    if (anggotaMap['__tanpa_kk__']) {
+      html += `<div style="font-size:11px;font-weight:700;color:var(--abu);margin:10px 0 4px;padding:0 4px">— Tanpa KK —</div>`;
+      anggotaMap['__tanpa_kk__'].forEach(j => { html += buatItemJamaah(j, false); });
+    }
+    el.innerHTML = html;
   } catch(e) { el.innerHTML = '<div class="empty">❌ Gagal memuat: ' + e.message + '</div>'; }
 }
 
-async function hapusJamaah(id) {
-  if (!confirm('Hapus jamaah ini?')) return;
+function buatItemJamaah(j, isKK) {
+  const usia = hitungUsia(j.tgl_lahir);
+  const usiaStr = usia !== null ? ` · ${usia} thn` : '';
+  const msBadge = j.is_ms ? ' <span style="background:#fef9c3;color:#854d0e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">⭐MS</span>' : '';
+  const kkBadge = isKK ? ' <span style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">🏠KK</span>' : '';
+  const borderLeft = isKK ? 'border-left:3px solid var(--hijau);' : 'border-left:3px solid var(--border);';
+  return `
+  <div class="list-item" style="${borderLeft}margin-bottom:5px">
+    <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}${isKK?';width:32px;height:32px;font-size:12px':''}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
+    <div class="info">
+      <div class="nama">${j.nama}${kkBadge}${msBadge} <span style="font-size:11px;color:#1e40af">${j.jenis_kelamin==='P'?'Perempuan':'Laki-laki'}${usiaStr}</span></div>
+      <div class="meta">${j.hp || '—'}${!isKK && j.kk_nama ? ' · KK: '+j.kk_nama : ''}</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}','${j.jenis_kelamin||'L'}','${j.tgl_lahir||''}',${!!j.is_ms},${!!j.is_kk},'${(j.kk_nama||'').replace(/'/g,"\\'")}')">Edit</button>
+    <button class="btn btn-danger btn-sm" onclick="hapusJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}',${!!j.is_kk})">Hapus</button>
+  </div>`;
+}
+
+async function hapusJamaah(id, nama, isKK) {
+  const msg = isKK
+    ? `Hapus KK "${nama}" beserta semua anggotanya?`
+    : `Hapus jamaah "${nama}"?`;
+  if (!confirm(msg)) return;
   try {
+    if (isKK) {
+      // Hapus semua anggota KK ini dulu
+      await sbDelete('jamaah?kk_nama=eq.' + encodeURIComponent(nama));
+    }
     await sbDelete('jamaah?id=eq.' + id);
-    toast('🗑️ Jamaah dihapus');
+    toast('🗑️ Dihapus');
     renderJamaah();
   } catch(e) { toast('❌ Gagal: ' + e.message); }
 }
@@ -654,7 +834,7 @@ async function bukaAbsensi(sesi) {
 
   try {
     const [jamaahList, absensiList] = await Promise.all([
-      sbGet('jamaah?order=nama.asc'),
+      sbGet('jamaah?order=urutan.asc,nama.asc'),
       sbGet('absensi?sesi_id=eq.' + sesi.id)
     ]);
 
@@ -828,13 +1008,15 @@ async function selesaiAbsensi() {
   } catch(e) { toast('❌ Gagal: ' + e.message); }
 }
 
-function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false) {
+function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false, is_kk=false, kk_nama='') {
   const modal = document.createElement('div');
   modal.id = 'modal-edit';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
+  const kkLabel = is_kk ? '<div style="background:#dcfce7;color:#166534;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;margin-bottom:12px">🏠 Kepala Keluarga (KK)</div>' : (kk_nama ? `<div style="background:#f0f9ff;color:#0369a1;font-size:12px;padding:6px 10px;border-radius:6px;margin-bottom:12px">Anggota KK: <strong>${kk_nama}</strong></div>` : '');
   modal.innerHTML = `
     <div style="background:#fff;border-radius:12px;padding:20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-      <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:14px">✏️ Edit Jamaah</div>
+      <div style="font-size:15px;font-weight:700;color:var(--hijau);margin-bottom:10px">✏️ Edit Jamaah</div>
+      ${kkLabel}
       <div class="form-group"><label>Nama Lengkap</label><input id="edit-nama" type="text" value="${nama}"></div>
       <div class="form-group"><label>No. HP</label><input id="edit-hp" type="text" value="${hp}"></div>
       <div class="form-group"><label>Tanggal Lahir</label><input id="edit-tgl" type="date" value="${tgl}"></div>
@@ -854,21 +1036,25 @@ function editJamaah(id, nama, hp, jk='L', tgl='', is_ms=false) {
       </div>
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-ghost" onclick="document.getElementById('modal-edit').remove()">Batal</button>
-        <button class="btn btn-primary" onclick="simpanEditJamaah('${id}')">Simpan</button>
+        <button class="btn btn-primary" onclick="simpanEditJamaah('${id}','${nama.replace(/'/g,"\\'")}',${is_kk})">Simpan</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
 }
 
-async function simpanEditJamaah(id) {
-  const nama = document.getElementById('edit-nama').value.trim();
-  const hp   = document.getElementById('edit-hp').value.trim();
-  const jk   = document.getElementById('edit-jk').value;
+async function simpanEditJamaah(id, namaLama, is_kk) {
+  const nama    = document.getElementById('edit-nama').value.trim();
+  const hp      = document.getElementById('edit-hp').value.trim();
+  const jk      = document.getElementById('edit-jk').value;
   const tgl_lahir = document.getElementById('edit-tgl').value || null;
-  const is_ms = document.getElementById('edit-ms').value === 'true';
+  const is_ms   = document.getElementById('edit-ms').value === 'true';
   if (!nama) return toast('⚠️ Nama wajib diisi');
   try {
     await sbPatch('jamaah?id=eq.' + id, { nama, hp, jenis_kelamin: jk, tgl_lahir, is_ms });
+    // Jika nama KK berubah, update kk_nama di semua anggotanya
+    if (is_kk && nama !== namaLama) {
+      await sbPatch('jamaah?kk_nama=eq.' + encodeURIComponent(namaLama), { kk_nama: nama });
+    }
     document.getElementById('modal-edit').remove();
     toast('✅ Data diperbarui');
     renderJamaah();
