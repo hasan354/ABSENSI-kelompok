@@ -99,6 +99,8 @@ input:focus, select:focus { border-color:var(--hijau); background:var(--putih); 
 .btn-filter { padding:6px 12px; border-radius:20px; border:1.5px solid var(--hijau); background:#f0fdf4; color:var(--hijau); font-size:11px; font-weight:700; cursor:pointer; width:auto; transition:.15s; }
 .btn-filter:hover { background:var(--hijau); color:#fff; }
 .btn-filter.active-filter { background:var(--hijau); color:#fff; }
+
+/* (drag dihapus) */
 </style>
 </head>
 <body>
@@ -655,13 +657,8 @@ async function renderJamaah(q='') {
   const el = document.getElementById('list-jamaah');
   el.innerHTML = '<div class="loader">Memuat...</div>';
   try {
-    let url = 'jamaah?order=urutan.asc,nama.asc';
-    const data = await sbGet(url);
-
-    // Filter pencarian
-    const filtered = q
-      ? data.filter(j => j.nama.toLowerCase().includes(q.toLowerCase()))
-      : data;
+    const data = await sbGet('jamaah?order=urutan.asc,nama.asc');
+    const filtered = q ? data.filter(j => j.nama.toLowerCase().includes(q.toLowerCase())) : data;
 
     document.getElementById('jml-jamaah').textContent = filtered.filter(j=>j.nama).length + ' orang';
 
@@ -670,16 +667,14 @@ async function renderJamaah(q='') {
       return;
     }
 
-    // Kelompokkan: KK + anggotanya
-    // Jika ada pencarian, tampilkan flat saja
     if (q) {
-      el.innerHTML = filtered.map(j => buatItemJamaah(j, false)).join('');
+      el.innerHTML = filtered.map(j => buatItemJamaah(j)).join('');
       return;
     }
 
-    // Tanpa pencarian: tampilkan per KK
+    // Susun: KK → anggotanya → tanpa KK
     const kkList = data.filter(j => j.is_kk);
-    const anggotaMap = {}; // kk_nama → array anggota
+    const anggotaMap = {};
     data.filter(j => !j.is_kk).forEach(j => {
       const k = j.kk_nama || '__tanpa_kk__';
       if (!anggotaMap[k]) anggotaMap[k] = [];
@@ -689,12 +684,10 @@ async function renderJamaah(q='') {
     let html = '';
     kkList.forEach(kk => {
       html += buatItemJamaah(kk, true);
-      const anggota = anggotaMap[kk.nama] || [];
-      anggota.forEach(a => {
+      (anggotaMap[kk.nama] || []).forEach(a => {
         html += `<div style="padding-left:16px">${buatItemJamaah(a, false)}</div>`;
       });
     });
-    // Jamaah tanpa KK
     if (anggotaMap['__tanpa_kk__']) {
       html += `<div style="font-size:11px;font-weight:700;color:var(--abu);margin:10px 0 4px;padding:0 4px">— Tanpa KK —</div>`;
       anggotaMap['__tanpa_kk__'].forEach(j => { html += buatItemJamaah(j, false); });
@@ -711,12 +704,6 @@ function buatItemJamaah(j, isKK) {
   const borderLeft = isKK ? 'border-left:3px solid var(--hijau);' : 'border-left:3px solid var(--border);';
   return `
   <div class="list-item" style="${borderLeft}margin-bottom:5px">
-    <div style="display:flex;flex-direction:column;gap:2px;margin-right:2px">
-      <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:13px;line-height:1" title="Naik"
-        onclick="geserUrutan('${j.id}','${(j.kk_nama||'').replace(/'/g,"\\'")}',${isKK},'naik')">▲</button>
-      <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:13px;line-height:1" title="Turun"
-        onclick="geserUrutan('${j.id}','${(j.kk_nama||'').replace(/'/g,"\\'")}',${isKK},'turun')">▼</button>
-    </div>
     <div class="avatar" style="background:${j.jenis_kelamin==='P'?'#be185d':'var(--hijau)'}${isKK?';width:32px;height:32px;font-size:12px':''}">${j.jenis_kelamin==='P'?'🧕':'👳'}</div>
     <div class="info">
       <div class="nama">${j.nama}${kkBadge}${msBadge} <span style="font-size:11px;color:#1e40af">${j.jenis_kelamin==='P'?'Perempuan':'Laki-laki'}${usiaStr}</span></div>
@@ -725,44 +712,6 @@ function buatItemJamaah(j, isKK) {
     <button class="btn btn-ghost btn-sm" onclick="editJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}','${(j.hp||'').replace(/'/g,"\\'")}','${j.jenis_kelamin||'L'}','${j.tgl_lahir||''}',${!!j.is_ms},${!!j.is_kk},'${(j.kk_nama||'').replace(/'/g,"\\'")}')">Edit</button>
     <button class="btn btn-danger btn-sm" onclick="hapusJamaah('${j.id}','${j.nama.replace(/'/g,"\\'")}',${!!j.is_kk})">Hapus</button>
   </div>`;
-}
-
-// ── GESER URUTAN ─────────────────────────────────────────
-async function geserUrutan(id, kkNama, isKK, arah) {
-  if (!checkCfg()) return;
-  try {
-    // Ambil semua jamaah dalam konteks yang sama
-    // KK: geser antar KK saja | Anggota: geser dalam KK yang sama saja
-    let url;
-    if (isKK) {
-      url = 'jamaah?is_kk=eq.true&order=urutan.asc,nama.asc';
-    } else {
-      const kkFilter = kkNama
-        ? 'jamaah?is_kk=eq.false&kk_nama=eq.' + encodeURIComponent(kkNama) + '&order=urutan.asc,nama.asc'
-        : 'jamaah?is_kk=eq.false&kk_nama=eq.&order=urutan.asc,nama.asc';
-      url = kkFilter;
-    }
-    const list = await sbGet(url);
-    const idx = list.findIndex(j => j.id === id);
-    if (idx === -1) return;
-
-    const swapIdx = arah === 'naik' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= list.length) return; // sudah di ujung
-
-    const a = list[idx];
-    const b = list[swapIdx];
-
-    // Tukar nilai urutan
-    const urutanA = a.urutan ?? idx * 10;
-    const urutanB = b.urutan ?? swapIdx * 10;
-
-    await Promise.all([
-      sbPatch('jamaah?id=eq.' + a.id, { urutan: urutanB }),
-      sbPatch('jamaah?id=eq.' + b.id, { urutan: urutanA })
-    ]);
-
-    renderJamaah();
-  } catch(e) { toast('❌ Gagal geser: ' + e.message); }
 }
 
 async function hapusJamaah(id, nama, isKK) {
