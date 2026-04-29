@@ -833,7 +833,11 @@ async function bukaAbsensi(sesi) {
     ]);
 
     let filtered = jamaahList;
-    if (sesi.jenis === 'keputrian') filtered = jamaahList.filter(j => j.jenis_kelamin === 'P');
+    if (sesi.jenis === 'keputrian') filtered = jamaahList.filter(j => {
+  if (j.jenis_kelamin !== 'P') return false;
+  const usia = hitungUsia(j.tgl_lahir);
+  return usia !== null && usia >= 17;
+});
     else if (sesi.jenis === 'ms') filtered = jamaahList.filter(j => j.is_ms);
 
     filtered.forEach(j => {
@@ -1741,4 +1745,4 @@ function tutupBanner() {
 }
 </script>
 </body>
-</html>
+</html>
